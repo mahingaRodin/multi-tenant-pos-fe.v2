@@ -12,6 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PosIndexRouteImport } from './routes/pos.index'
+import { Route as SuperAdminDashboardRouteImport } from './routes/super-admin.dashboard'
+import { Route as StoreDashboardRouteImport } from './routes/store.dashboard'
+import { Route as PosShiftRouteImport } from './routes/pos.shift'
+import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
+import { Route as CustomerPortalRouteImport } from './routes/customer.portal'
+import { Route as BranchDashboardRouteImport } from './routes/branch.dashboard'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -28,35 +35,129 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PosIndexRoute = PosIndexRouteImport.update({
+  id: '/pos/',
+  path: '/pos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperAdminDashboardRoute = SuperAdminDashboardRouteImport.update({
+  id: '/super-admin/dashboard',
+  path: '/super-admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreDashboardRoute = StoreDashboardRouteImport.update({
+  id: '/store/dashboard',
+  path: '/store/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosShiftRoute = PosShiftRouteImport.update({
+  id: '/pos/shift',
+  path: '/pos/shift',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosRefundsRoute = PosRefundsRouteImport.update({
+  id: '/pos/refunds',
+  path: '/pos/refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerPortalRoute = CustomerPortalRouteImport.update({
+  id: '/customer/portal',
+  path: '/customer/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchDashboardRoute = BranchDashboardRouteImport.update({
+  id: '/branch/dashboard',
+  path: '/branch/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/branch/dashboard': typeof BranchDashboardRoute
+  '/customer/portal': typeof CustomerPortalRoute
+  '/pos/refunds': typeof PosRefundsRoute
+  '/pos/shift': typeof PosShiftRoute
+  '/store/dashboard': typeof StoreDashboardRoute
+  '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/pos/': typeof PosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/branch/dashboard': typeof BranchDashboardRoute
+  '/customer/portal': typeof CustomerPortalRoute
+  '/pos/refunds': typeof PosRefundsRoute
+  '/pos/shift': typeof PosShiftRoute
+  '/store/dashboard': typeof StoreDashboardRoute
+  '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/pos': typeof PosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/branch/dashboard': typeof BranchDashboardRoute
+  '/customer/portal': typeof CustomerPortalRoute
+  '/pos/refunds': typeof PosRefundsRoute
+  '/pos/shift': typeof PosShiftRoute
+  '/store/dashboard': typeof StoreDashboardRoute
+  '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/pos/': typeof PosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/branch/dashboard'
+    | '/customer/portal'
+    | '/pos/refunds'
+    | '/pos/shift'
+    | '/store/dashboard'
+    | '/super-admin/dashboard'
+    | '/pos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup'
-  id: '__root__' | '/' | '/login' | '/signup'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/branch/dashboard'
+    | '/customer/portal'
+    | '/pos/refunds'
+    | '/pos/shift'
+    | '/store/dashboard'
+    | '/super-admin/dashboard'
+    | '/pos'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/branch/dashboard'
+    | '/customer/portal'
+    | '/pos/refunds'
+    | '/pos/shift'
+    | '/store/dashboard'
+    | '/super-admin/dashboard'
+    | '/pos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  BranchDashboardRoute: typeof BranchDashboardRoute
+  CustomerPortalRoute: typeof CustomerPortalRoute
+  PosRefundsRoute: typeof PosRefundsRoute
+  PosShiftRoute: typeof PosShiftRoute
+  StoreDashboardRoute: typeof StoreDashboardRoute
+  SuperAdminDashboardRoute: typeof SuperAdminDashboardRoute
+  PosIndexRoute: typeof PosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +183,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pos/': {
+      id: '/pos/'
+      path: '/pos'
+      fullPath: '/pos/'
+      preLoaderRoute: typeof PosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super-admin/dashboard': {
+      id: '/super-admin/dashboard'
+      path: '/super-admin/dashboard'
+      fullPath: '/super-admin/dashboard'
+      preLoaderRoute: typeof SuperAdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/dashboard': {
+      id: '/store/dashboard'
+      path: '/store/dashboard'
+      fullPath: '/store/dashboard'
+      preLoaderRoute: typeof StoreDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pos/shift': {
+      id: '/pos/shift'
+      path: '/pos/shift'
+      fullPath: '/pos/shift'
+      preLoaderRoute: typeof PosShiftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pos/refunds': {
+      id: '/pos/refunds'
+      path: '/pos/refunds'
+      fullPath: '/pos/refunds'
+      preLoaderRoute: typeof PosRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer/portal': {
+      id: '/customer/portal'
+      path: '/customer/portal'
+      fullPath: '/customer/portal'
+      preLoaderRoute: typeof CustomerPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branch/dashboard': {
+      id: '/branch/dashboard'
+      path: '/branch/dashboard'
+      fullPath: '/branch/dashboard'
+      preLoaderRoute: typeof BranchDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +239,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  BranchDashboardRoute: BranchDashboardRoute,
+  CustomerPortalRoute: CustomerPortalRoute,
+  PosRefundsRoute: PosRefundsRoute,
+  PosShiftRoute: PosShiftRoute,
+  StoreDashboardRoute: StoreDashboardRoute,
+  SuperAdminDashboardRoute: SuperAdminDashboardRoute,
+  PosIndexRoute: PosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
