@@ -1,0 +1,46 @@
+import axios, { AxiosError } from "axios";
+import { useAuthStore } from "@/stores/authStore";
+
+export const API_BASE_URL = "http://pos.5.180.181.195.nip.io/msp";
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
+  timeout: 20000,
+});
+
+// Attach Bearer token
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers = config.headers ?? {};
+    (config.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// 401 -> logout
+api.interceptors.response.use(
+  (res) => res,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      const { token, logout } = useAuthStore.getState();
+      if (token) {
+        logout();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+export function getApiErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { message?: string; error?: string } | undefined;
+    return data?.message || data?.error || err.message || "Request failed";
+  }
+  if (err instanceof Error) return err.message;
+  return "Unexpected error";
+}
