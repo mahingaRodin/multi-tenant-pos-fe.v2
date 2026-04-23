@@ -24,6 +24,37 @@ export interface UserDto {
   lastLogin?: string;
 }
 
+export type EStoreStatus = "ACTIVE" | "PENDING" | "BLOCKED";
+
+export interface StoreContact {
+  address?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface StoreDto {
+  id?: string;
+  brand: string;
+  description?: string;
+  storeType?: string;
+  status?: EStoreStatus;
+  contact?: StoreContact;
+  storeAdmin?: UserDto;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Spring Page<T> wrapper */
+export interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
 export interface AuthResponse {
   jwt: string;
   message?: string;
@@ -115,10 +146,14 @@ export interface ShiftReportDto {
   totalRefunds?: number;
   netSale?: number;
   totalOrders?: number;
+  branch?: BranchDto;
   branchId?: string;
+  cashier?: UserDto;
   cashierId?: string;
   paymentSummaries?: PaymentSummary[];
+  topSellingProducts?: ProductDto[];
   recentOrders?: OrderDto[];
+  refunds?: RefundDto[];
 }
 
 export interface RefundDto {

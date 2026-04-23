@@ -41,8 +41,8 @@ function Landing() {
             Run your retail. <span className="text-accent">Everywhere.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground">
-            One platform for stores, branches, cashiers, and customers — with a fast POS
-            terminal, real-time inventory, and shift-level reporting.
+            One platform for stores, branches, cashiers, and customers — with a fast POS terminal,
+            real-time inventory, and shift-level reporting.
           </p>
           <div className="mt-8 flex justify-center gap-3">
             <Button size="lg" asChild>
@@ -56,9 +56,21 @@ function Landing() {
 
         <div className="mx-auto mt-20 grid max-w-5xl gap-6 md:grid-cols-3">
           {[
-            { icon: Store, title: "Multi-store", body: "Manage tenants and branches from one console." },
-            { icon: BarChart3, title: "Live analytics", body: "Sales, shifts, and top products in real time." },
-            { icon: Users, title: "Role-based", body: "Admins, managers, cashiers, and customers." },
+            {
+              icon: Store,
+              title: "Multi-store",
+              body: "Manage tenants and branches from one console.",
+            },
+            {
+              icon: BarChart3,
+              title: "Live analytics",
+              body: "Sales, shifts, and top products in real time.",
+            },
+            {
+              icon: Users,
+              title: "Role-based",
+              body: "Admins, managers, cashiers, and customers.",
+            },
           ].map((f) => (
             <div key={f.title} className="rounded-xl border bg-card p-6 shadow-sm">
               <f.icon className="size-6 text-accent" />

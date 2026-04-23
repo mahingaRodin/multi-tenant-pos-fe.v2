@@ -171,7 +171,9 @@ function PosTerminal() {
       const h = Math.floor(ms / 3_600_000);
       const m = Math.floor((ms % 3_600_000) / 60_000);
       const s = Math.floor((ms % 60_000) / 1000);
-      setElapsed(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+      setElapsed(
+        `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+      );
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -374,9 +376,7 @@ function PosTerminal() {
                         )}
                       </div>
                       <div className="line-clamp-2 text-sm font-medium">{p.name}</div>
-                      {p.sku && (
-                        <div className="text-xs text-muted-foreground">{p.sku}</div>
-                      )}
+                      {p.sku && <div className="text-xs text-muted-foreground">{p.sku}</div>}
                       <div className="mt-1 flex items-end justify-between">
                         <div className="font-display text-base font-bold">
                           {fmtMoney(p.sellingPrice)}
@@ -766,9 +766,7 @@ function ReceiptDialog({ order, onClose }: { order: OrderDto | null; onClose: ()
           </ul>
           <div className="mt-3 flex items-center justify-between border-t pt-3">
             <span className="font-semibold">Total</span>
-            <span className="font-display text-lg font-bold">
-              {fmtMoney(order?.totalAmount)}
-            </span>
+            <span className="font-display text-lg font-bold">{fmtMoney(order?.totalAmount)}</span>
           </div>
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <span>Payment</span>

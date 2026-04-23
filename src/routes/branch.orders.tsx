@@ -1,13 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Receipt, Search, Loader2, Calendar, CreditCard, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
+import {
+  Receipt,
+  Search,
+  Loader2,
+  Calendar,
+  CreditCard,
+  Banknote,
+  Smartphone,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { OrderDto } from "@/lib/types";
+import type { OrderDto, PagedResponse } from "@/lib/types";
 import { fmtMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,15 +43,18 @@ function OrdersPage() {
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const [selectedOrder, setSelectedOrder] = useState<OrderDto | null>(null);
 
   const fetchOrders = async () => {
     if (!branchId) return;
     setLoading(true);
     try {
-      const res = await api.get<OrderDto[]>(`/api/orders/branch/${branchId}`);
-      setOrders(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<OrderDto>>(`/api/orders/branch/${branchId}`, {
+        params: { page: 0, size: 200 },
+      });
+      const data = res.data;
+      setOrders(Array.isArray(data?.content) ? data.content : Array.isArray(data) ? (data as unknown as OrderDto[]) : []);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -65,14 +77,22 @@ function OrdersPage() {
 
   // Separate today's orders
   const today = new Date().toDateString();
-  const todaysOrders = filteredOrders.filter(o => o.createdAt && new Date(o.createdAt).toDateString() === today);
-  const olderOrders = filteredOrders.filter(o => !o.createdAt || new Date(o.createdAt).toDateString() !== today);
+  const todaysOrders = filteredOrders.filter(
+    (o) => o.createdAt && new Date(o.createdAt).toDateString() === today,
+  );
+  const olderOrders = filteredOrders.filter(
+    (o) => !o.createdAt || new Date(o.createdAt).toDateString() !== today,
+  );
 
   const PaymentIcon = ({ type }: { type: string }) => {
     switch (type) {
-      case "CARD": return <CreditCard className="size-4 text-blue-500" />;
-      case "UPI": return <Smartphone className="size-4 text-purple-500" />;
-      case "CASH": default: return <Banknote className="size-4 text-emerald-500" />;
+      case "CARD":
+        return <CreditCard className="size-4 text-blue-500" />;
+      case "UPI":
+        return <Smartphone className="size-4 text-purple-500" />;
+      case "CASH":
+      default:
+        return <Banknote className="size-4 text-emerald-500" />;
     }
   };
 
@@ -83,7 +103,7 @@ function OrdersPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Review all transactions processed at this branch.
         </p>
-        
+
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -107,7 +127,9 @@ function OrdersPage() {
             <Receipt className="mb-4 size-12 text-muted-foreground/50" />
             <h3 className="font-display text-lg font-bold">No orders found</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              {searchQuery ? "Try a different search query." : "No orders have been processed at this branch yet."}
+              {searchQuery
+                ? "Try a different search query."
+                : "No orders have been processed at this branch yet."}
             </p>
           </div>
         ) : (
@@ -116,9 +138,15 @@ function OrdersPage() {
               <section>
                 <div className="mb-4 flex items-center gap-2">
                   <StatusBadge variant="active">Today</StatusBadge>
-                  <span className="text-sm text-muted-foreground">{todaysOrders.length} orders</span>
+                  <span className="text-sm text-muted-foreground">
+                    {todaysOrders.length} orders
+                  </span>
                 </div>
-                <OrderTable orders={todaysOrders} onSelect={setSelectedOrder} PaymentIcon={PaymentIcon} />
+                <OrderTable
+                  orders={todaysOrders}
+                  onSelect={setSelectedOrder}
+                  PaymentIcon={PaymentIcon}
+                />
               </section>
             )}
 
@@ -128,16 +156,20 @@ function OrdersPage() {
                   <h3 className="font-display text-lg font-bold">Previous Orders</h3>
                   <span className="text-sm text-muted-foreground">{olderOrders.length} orders</span>
                 </div>
-                <OrderTable orders={olderOrders} onSelect={setSelectedOrder} PaymentIcon={PaymentIcon} />
+                <OrderTable
+                  orders={olderOrders}
+                  onSelect={setSelectedOrder}
+                  PaymentIcon={PaymentIcon}
+                />
               </section>
             )}
           </div>
         )}
       </div>
 
-      <OrderDetailsDialog 
-        order={selectedOrder} 
-        onClose={() => setSelectedOrder(null)} 
+      <OrderDetailsDialog
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
         PaymentIcon={PaymentIcon}
       />
     </div>
@@ -160,8 +192,8 @@ function OrderTable({ orders, onSelect, PaymentIcon }: any) {
           </thead>
           <tbody className="divide-y">
             {orders.map((order: OrderDto) => (
-              <tr 
-                key={order.id} 
+              <tr
+                key={order.id}
                 onClick={() => onSelect(order)}
                 className="hover:bg-muted/30 transition-colors cursor-pointer group"
               >
@@ -172,7 +204,9 @@ function OrderTable({ orders, onSelect, PaymentIcon }: any) {
                   <div className="flex items-center gap-2">
                     <Calendar className="size-4 text-muted-foreground" />
                     <span>
-                      {order.createdAt ? format(new Date(order.createdAt), "MMM d, yyyy h:mm a") : "-"}
+                      {order.createdAt
+                        ? format(new Date(order.createdAt), "MMM d, yyyy h:mm a")
+                        : "-"}
                     </span>
                   </div>
                 </td>
@@ -212,13 +246,15 @@ function OrderDetailsDialog({ order, onClose, PaymentIcon }: any) {
                 <span className="font-mono text-xs">#{order.id}</span>
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="my-4 rounded-lg border bg-muted/30 p-4">
               <div className="mb-4 flex flex-col gap-1 text-sm text-muted-foreground border-b pb-4">
                 <div className="flex justify-between">
                   <span>Date</span>
                   <span className="text-foreground">
-                    {order.createdAt ? format(new Date(order.createdAt), "MMM d, yyyy h:mm a") : "-"}
+                    {order.createdAt
+                      ? format(new Date(order.createdAt), "MMM d, yyyy h:mm a")
+                      : "-"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -239,12 +275,16 @@ function OrderDetailsDialog({ order, onClose, PaymentIcon }: any) {
                 {order.items?.map((it: any, idx: number) => (
                   <li key={idx} className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium">{it.product?.name || `Product ID: ${it.productId.slice(0, 8)}`}</div>
+                      <div className="font-medium">
+                        {it.product?.name || `Product ID: ${it.productId.slice(0, 8)}`}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {it.quantity} × {fmtMoney(it.price)}
                       </div>
                     </div>
-                    <span className="font-mono tabular-nums">{fmtMoney(it.price * it.quantity)}</span>
+                    <span className="font-mono tabular-nums">
+                      {fmtMoney(it.price * it.quantity)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -255,7 +295,7 @@ function OrderDetailsDialog({ order, onClose, PaymentIcon }: any) {
                 </span>
               </div>
             </div>
-            
+
             <Button className="w-full" variant="outline" onClick={onClose}>
               Close
             </Button>

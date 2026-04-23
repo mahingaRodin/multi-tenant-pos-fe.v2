@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Loader2, PackageOpen, AlertTriangle, Package, Check, X } from "lucide-react";
+import { Search, Loader2, PackageOpen, AlertTriangle, Package, Check, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -104,7 +104,7 @@ function InventoryPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Monitor and update stock levels for this branch.
         </p>
-        
+
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -153,7 +153,11 @@ function InventoryPage() {
                             <div className="flex size-10 items-center justify-center rounded bg-muted overflow-hidden">
                               {inv.product?.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={inv.product.image} alt={inv.product.name} className="object-cover w-full h-full" />
+                                <img
+                                  src={inv.product.image}
+                                  alt={inv.product.name}
+                                  className="object-cover w-full h-full"
+                                />
                               ) : (
                                 <Package className="size-5 text-muted-foreground" />
                               )}
@@ -168,7 +172,7 @@ function InventoryPage() {
                         </td>
                         <td className="px-6 py-4">
                           <StatusBadge
-                            variant={isOut ? "danger" : isLow ? "warning" : "active"}
+                            variant={isOut ? "danger" : isLow ? "pending" : "active"}
                             className="px-2.5 py-0.5 whitespace-nowrap"
                           >
                             {isOut ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}
@@ -185,14 +189,20 @@ function InventoryPage() {
                                 className="h-8 text-sm"
                                 autoFocus
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') inv.id && handleSaveStock(inv.id);
-                                  if (e.key === 'Escape') setEditingId(null);
+                                  if (e.key === "Enter") inv.id && handleSaveStock(inv.id);
+                                  if (e.key === "Escape") setEditingId(null);
                                 }}
                               />
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className={cn("font-bold text-base tabular-nums", isLow && "text-warning", isOut && "text-destructive")}>
+                              <span
+                                className={cn(
+                                  "font-bold text-base tabular-nums",
+                                  isLow && "text-warning",
+                                  isOut && "text-destructive",
+                                )}
+                              >
                                 {inv.quantity}
                               </span>
                               {isLow && !isOut && <AlertTriangle className="size-4 text-warning" />}
@@ -251,14 +261,18 @@ function InventoryPage() {
             <h2 className="font-display text-lg font-bold mb-4">Unassigned Products</h2>
             <div className="rounded-xl border bg-card p-4">
               <p className="text-sm text-muted-foreground mb-4">
-                These products from the store catalog don't have an inventory record in your branch yet.
+                These products from the store catalog don't have an inventory record in your branch
+                yet.
               </p>
               <div className="flex flex-wrap gap-2">
                 {products
                   .filter((p) => !inventories.some((inv) => inv.productId === p.id))
                   .slice(0, 10)
                   .map((p) => (
-                    <div key={p.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-3 pr-1 py-1 border text-sm">
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-2 bg-muted/50 rounded-full pl-3 pr-1 py-1 border text-sm"
+                    >
                       <span className="truncate max-w-[150px]">{p.name}</span>
                       <Button
                         size="sm"

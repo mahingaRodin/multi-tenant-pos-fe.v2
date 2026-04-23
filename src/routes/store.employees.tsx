@@ -22,11 +22,13 @@ export const Route = createFileRoute("/store/employees")({
 
 function roleDisplay(role?: string) {
   if (!role) return "Unknown";
-  return {
-    ROLE_STORE_MANAGER: "Store Manager",
-    ROLE_BRANCH_MANAGER: "Branch Manager",
-    ROLE_BRANCH_CASHIER: "Cashier",
-  }[role] || role;
+  return (
+    {
+      ROLE_STORE_MANAGER: "Store Manager",
+      ROLE_BRANCH_MANAGER: "Branch Manager",
+      ROLE_BRANCH_CASHIER: "Cashier",
+    }[role] || role
+  );
 }
 
 function EmployeesPage() {
@@ -150,7 +152,7 @@ function EmployeesPage() {
                     <StatusBadge
                       variant={
                         emp.role === "ROLE_STORE_MANAGER"
-                          ? "success"
+                          ? "active"
                           : emp.role === "ROLE_BRANCH_MANAGER"
                             ? "active"
                             : "muted"

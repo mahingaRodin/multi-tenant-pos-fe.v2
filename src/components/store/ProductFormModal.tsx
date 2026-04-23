@@ -107,7 +107,7 @@ export function ProductFormModal({
         mrp: mrp ? Number(mrp) : undefined,
         brand: brand.trim() || undefined,
         categoryId,
-        storeId,
+        storeId: storeId ?? undefined,
         image: image.trim() || undefined,
       };
 
@@ -144,7 +144,7 @@ export function ProductFormModal({
                 autoFocus
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Category *</Label>
               <Select value={categoryId} onValueChange={setCategoryId} disabled={loadingCats}>

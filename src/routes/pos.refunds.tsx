@@ -21,7 +21,13 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useShiftStore } from "@/stores/shiftStore";
 
 export const Route = createFileRoute("/pos/refunds")({
@@ -37,7 +43,7 @@ function RefundsPage() {
   const { currentShift } = useShiftStore();
   const [refunds, setRefunds] = useState<RefundDto[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [modalOpen, setModalOpen] = useState(false);
 
   const fetchRefunds = async () => {
@@ -115,12 +121,14 @@ function RefundsPage() {
                         <div className="flex items-center gap-2">
                           <Calendar className="size-4 text-muted-foreground" />
                           <span>
-                            {refund.createdAt ? format(new Date(refund.createdAt), "MMM d, yyyy h:mm a") : "-"}
+                            {refund.createdAt
+                              ? format(new Date(refund.createdAt), "MMM d, yyyy h:mm a")
+                              : "-"}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <StatusBadge variant="warning">{refund.reason || "Return"}</StatusBadge>
+                        <StatusBadge variant="pending">{refund.reason || "Return"}</StatusBadge>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
                         {refund.cashierName || "Unknown"}
@@ -137,9 +145,9 @@ function RefundsPage() {
         )}
       </div>
 
-      <RefundFormModal 
-        open={modalOpen} 
-        onClose={() => setModalOpen(false)} 
+      <RefundFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
         onSuccess={fetchRefunds}
         branchId={branchId}
         cashierName={user?.firstName ? `${user.firstName} ${user.lastName}` : user?.email}
@@ -153,10 +161,10 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
   const [orderId, setOrderId] = useState("");
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
-  
+
   const [reason, setReason] = useState("Customer Return");
   const [submitting, setSubmitting] = useState(false);
-  
+
   // A real system would track per-item refund amounts. Here we do a full order refund for simplicity.
 
   const fetchOrder = async () => {
@@ -184,7 +192,7 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
         branchId,
         shiftReportId: shiftId,
         cashierName,
-        paymentType: order.paymentType
+        paymentType: order.paymentType,
       });
       toast.success("Refund processed successfully");
       setOrder(null);
@@ -216,11 +224,15 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
                 placeholder="Enter full Order ID..."
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') fetchOrder();
+                  if (e.key === "Enter") fetchOrder();
                 }}
               />
               <Button variant="secondary" onClick={fetchOrder} disabled={loadingOrder}>
-                {loadingOrder ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+                {loadingOrder ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -237,12 +249,16 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
                 <span className="text-muted-foreground">Payment Method</span>
                 <span className="font-medium capitalize">{order.paymentType.toLowerCase()}</span>
               </div>
-              
-              <div className="text-sm font-medium mb-2">Order Items ({order.items?.length || 0})</div>
+
+              <div className="text-sm font-medium mb-2">
+                Order Items ({order.items?.length || 0})
+              </div>
               <ul className="space-y-1 mb-4 text-xs text-muted-foreground">
                 {order.items?.slice(0, 3).map((it: any, i: number) => (
                   <li key={i} className="flex justify-between">
-                    <span>{it.quantity}x {it.product?.name || `ID: ${it.productId.slice(0,8)}`}</span>
+                    <span>
+                      {it.quantity}x {it.product?.name || `ID: ${it.productId.slice(0, 8)}`}
+                    </span>
                     <span>{fmtMoney(it.price * it.quantity)}</span>
                   </li>
                 ))}
@@ -251,7 +267,9 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
 
               <div className="flex items-center justify-between rounded bg-background p-2 text-sm font-bold">
                 <span>Refund Amount</span>
-                <span className="text-destructive font-display text-lg">{fmtMoney(order.totalAmount)}</span>
+                <span className="text-destructive font-display text-lg">
+                  {fmtMoney(order.totalAmount)}
+                </span>
               </div>
             </div>
           )}
@@ -276,7 +294,9 @@ function RefundFormModal({ open, onClose, onSuccess, branchId, cashierName, shif
           {!shiftId && (
             <div className="flex items-center gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning-foreground">
               <AlertCircle className="size-4 shrink-0" />
-              <span>You don't have an active shift. This refund will not be linked to a shift report.</span>
+              <span>
+                You don't have an active shift. This refund will not be linked to a shift report.
+              </span>
             </div>
           )}
         </div>

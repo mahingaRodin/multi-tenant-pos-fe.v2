@@ -57,7 +57,8 @@ function StoreDashboard() {
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold">Store Overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Welcome back, {user?.firstName || user?.email}. Here's what's happening at your store today.
+          Welcome back, {user?.firstName || user?.email}. Here's what's happening at your store
+          today.
         </p>
       </div>
 
@@ -77,16 +78,8 @@ function StoreDashboard() {
           trend="+8.2%"
           trendUp={true}
         />
-        <StatCard
-          title="Active Branches"
-          value="4"
-          icon={Store}
-        />
-        <StatCard
-          title="Total Products"
-          value="342"
-          icon={Package}
-        />
+        <StatCard title="Active Branches" value="4" icon={Store} />
+        <StatCard title="Total Products" value="342" icon={Package} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -100,11 +93,26 @@ function StoreDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={REVENUE_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(val) => `$${val}`} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={(val) => `$${val}`}
+                />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
-                  formatter={(value: number) => [fmtMoney(value), "Revenue"]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                  }}
+                  formatter={(value) => [fmtMoney(Number(value)), "Revenue"]}
                 />
                 <Line
                   type="monotone"
@@ -148,14 +156,32 @@ function StoreDashboard() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={BRANCH_SALES_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart
+                data={BRANCH_SALES_DATA}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(val) => `$${val}`} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={(val) => `$${val}`}
+                />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.5)" }}
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
-                  formatter={(value: number) => [fmtMoney(value), "Sales"]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                  }}
+                  formatter={(value) => [fmtMoney(Number(value)), "Sales"]}
                 />
                 <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>

@@ -75,7 +75,7 @@ export function BranchFormModal({
         email: email.trim() || undefined,
         openTime: openTime.trim() || undefined,
         closeTime: closeTime.trim() || undefined,
-        storeId,
+        storeId: storeId ?? undefined,
       };
 
       if (isEditing && branchToEdit.id) {
@@ -130,7 +130,7 @@ export function BranchFormModal({
                 placeholder="branch@example.com"
               />
             </div>
-            
+
             <div className="col-span-2 space-y-2">
               <Label>Address</Label>
               <Input
@@ -142,20 +142,12 @@ export function BranchFormModal({
 
             <div className="space-y-2">
               <Label>Open Time</Label>
-              <Input
-                type="time"
-                value={openTime}
-                onChange={(e) => setOpenTime(e.target.value)}
-              />
+              <Input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Close Time</Label>
-              <Input
-                type="time"
-                value={closeTime}
-                onChange={(e) => setCloseTime(e.target.value)}
-              />
+              <Input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

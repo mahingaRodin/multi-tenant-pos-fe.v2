@@ -106,7 +106,7 @@ export function EmployeeFormModal({
         phone: phone.trim() || undefined,
         role: role as Role,
         branchId: branchId || undefined,
-        storeId,
+        storeId: storeId ?? undefined,
       };
 
       if (password.trim()) {
@@ -139,36 +139,22 @@ export function EmployeeFormModal({
           <div className="grid grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label>First Name *</Label>
-              <Input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                autoFocus
-              />
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoFocus />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Last Name *</Label>
-              <Input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
 
             <div className="col-span-2 space-y-2">
               <Label>Email *</Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
 
             <div className="space-y-2">
