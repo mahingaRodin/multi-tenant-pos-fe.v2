@@ -112,7 +112,7 @@ function StoreDashboard() {
                     borderRadius: "8px",
                     border: "1px solid hsl(var(--border))",
                   }}
-                  formatter={(value: number) => [fmtMoney(value), "Revenue"]}
+                  formatter={(value) => [fmtMoney(Number(value)), "Revenue"]}
                 />
                 <Line
                   type="monotone"
@@ -181,7 +181,7 @@ function StoreDashboard() {
                     borderRadius: "8px",
                     border: "1px solid hsl(var(--border))",
                   }}
-                  formatter={(value: number) => [fmtMoney(value), "Sales"]}
+                  formatter={(value) => [fmtMoney(Number(value)), "Sales"]}
                 />
                 <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>

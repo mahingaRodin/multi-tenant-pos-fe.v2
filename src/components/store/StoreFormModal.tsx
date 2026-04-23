@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function StoreFormModal({
   open,
@@ -27,44 +34,53 @@ export function StoreFormModal({
 }) {
   const isEditing = !!storeToEdit;
 
-  // Form State
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
+  const [brand, setBrand] = useState("");
+  const [description, setDescription] = useState("");
+  const [storeType, setStoreType] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [address, setAddress] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       if (storeToEdit) {
-        setName(storeToEdit.name || "");
-        setAddress(storeToEdit.address || "");
-        setContactPhone(storeToEdit.contactPhone || "");
-        setContactEmail(storeToEdit.contactEmail || "");
+        setBrand(storeToEdit.brand || "");
+        setDescription(storeToEdit.description || "");
+        setStoreType(storeToEdit.storeType || "");
+        setContactPhone(storeToEdit.contact?.phone || "");
+        setContactEmail(storeToEdit.contact?.email || "");
+        setAddress(storeToEdit.contact?.address || "");
       } else {
-        setName("");
-        setAddress("");
+        setBrand("");
+        setDescription("");
+        setStoreType("");
         setContactPhone("");
         setContactEmail("");
+        setAddress("");
       }
     }
   }, [open, storeToEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Store name is required");
+    if (!brand.trim()) {
+      toast.error("Store brand name is required");
       return;
     }
 
     setSubmitting(true);
     try {
       const payload: Partial<StoreDto> = {
-        name: name.trim(),
-        address: address.trim() || undefined,
-        contactPhone: contactPhone.trim() || undefined,
-        contactEmail: contactEmail.trim() || undefined,
+        brand: brand.trim(),
+        description: description.trim() || undefined,
+        storeType: storeType || undefined,
+        contact: {
+          phone: contactPhone.trim() || undefined,
+          email: contactEmail.trim() || undefined,
+          address: address.trim() || undefined,
+        },
       };
 
       if (isEditing && storeToEdit.id) {
@@ -92,13 +108,39 @@ export function StoreFormModal({
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-4">
             <div className="col-span-2 space-y-2">
-              <Label>Store Name *</Label>
+              <Label>Brand Name *</Label>
               <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
                 placeholder="e.g. MegaMart"
                 autoFocus
               />
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label>Description</Label>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief description of the store"
+              />
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label>Store Type</Label>
+              <Select value={storeType} onValueChange={setStoreType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RETAIL">Retail</SelectItem>
+                  <SelectItem value="GROCERY">Grocery</SelectItem>
+                  <SelectItem value="ELECTRONICS">Electronics</SelectItem>
+                  <SelectItem value="FASHION">Fashion</SelectItem>
+                  <SelectItem value="PHARMACY">Pharmacy</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

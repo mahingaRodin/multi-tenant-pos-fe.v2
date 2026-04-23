@@ -152,7 +152,7 @@ function EmployeesPage() {
                     <StatusBadge
                       variant={
                         emp.role === "ROLE_STORE_MANAGER"
-                          ? "success"
+                          ? "active"
                           : emp.role === "ROLE_BRANCH_MANAGER"
                             ? "active"
                             : "muted"

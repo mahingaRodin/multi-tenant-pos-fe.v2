@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Loader2, PackageOpen, AlertTriangle, Package, Check, X } from "lucide-react";
+import { Search, Loader2, PackageOpen, AlertTriangle, Package, Check, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -172,7 +172,7 @@ function InventoryPage() {
                         </td>
                         <td className="px-6 py-4">
                           <StatusBadge
-                            variant={isOut ? "danger" : isLow ? "warning" : "active"}
+                            variant={isOut ? "danger" : isLow ? "pending" : "active"}
                             className="px-2.5 py-0.5 whitespace-nowrap"
                           >
                             {isOut ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}

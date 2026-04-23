@@ -107,7 +107,7 @@ export function ProductFormModal({
         mrp: mrp ? Number(mrp) : undefined,
         brand: brand.trim() || undefined,
         categoryId,
-        storeId,
+        storeId: storeId ?? undefined,
         image: image.trim() || undefined,
       };
 

@@ -106,7 +106,7 @@ export function EmployeeFormModal({
         phone: phone.trim() || undefined,
         role: role as Role,
         branchId: branchId || undefined,
-        storeId,
+        storeId: storeId ?? undefined,
       };
 
       if (password.trim()) {

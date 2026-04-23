@@ -50,31 +50,28 @@ function ShiftReportPage() {
   useEffect(() => {
     let mounted = true;
     const fetchShifts = async () => {
+      if (!userId) return;
       setLoading(true);
+      let myShifts: ShiftReportDto[] = [];
       try {
-        const res = await api.get<ShiftReportDto[]>(`/api/shift-reports`);
+        const res = await api.get<ShiftReportDto[]>(`/api/shift-reports/cashier/${userId}`);
+        myShifts = Array.isArray(res.data) ? res.data : [];
         if (mounted) {
-          // Filter shifts for this cashier
-          const myShifts = (res.data || []).filter((s) => !userId || s.cashierId === userId);
           setShifts(myShifts);
-
-          if (myShifts.length > 0 && selectedShiftId !== "current") {
-            setActiveShift(myShifts.find((s) => s.id === selectedShiftId) || null);
-          }
         }
 
-        if (selectedShiftId === "current") {
-          try {
-            const cur = await api.get<ShiftReportDto>(`/api/shift-reports/current`);
-            if (mounted) {
-              setActiveShift(cur.data);
-            }
-          } catch {
-            // No current shift
-            if (mounted && myShifts.length > 0) {
-              setSelectedShiftId(myShifts[0].id!);
-              setActiveShift(myShifts[0]);
-            }
+        // Try to load the current active shift
+        try {
+          const cur = await api.get<ShiftReportDto>(`/api/shift-reports/current`);
+          if (mounted) {
+            setActiveShift(cur.data);
+            setSelectedShiftId("current");
+          }
+        } catch {
+          // No current shift – fall back to the most recent shift
+          if (mounted && myShifts.length > 0) {
+            setSelectedShiftId(myShifts[0].id!);
+            setActiveShift(myShifts[0]);
           }
         }
       } catch (err) {
@@ -88,7 +85,7 @@ function ShiftReportPage() {
     return () => {
       mounted = false;
     };
-  }, [userId, selectedShiftId]);
+  }, [userId]);
 
   const handleShiftChange = (val: string) => {
     setSelectedShiftId(val);
@@ -234,7 +231,7 @@ function ShiftReportPage() {
                           borderRadius: "8px",
                           border: "1px solid hsl(var(--border))",
                         }}
-                        formatter={(value: number) => [fmtMoney(value), "Sales"]}
+                        formatter={(value) => [fmtMoney(Number(value)), "Sales"]}
                       />
                       <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>

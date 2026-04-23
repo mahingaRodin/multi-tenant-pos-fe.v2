@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { OrderDto } from "@/lib/types";
+import type { OrderDto, PagedResponse } from "@/lib/types";
 import { fmtMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +50,11 @@ function OrdersPage() {
     if (!branchId) return;
     setLoading(true);
     try {
-      const res = await api.get<OrderDto[]>(`/api/orders/branch/${branchId}`);
-      setOrders(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<OrderDto>>(`/api/orders/branch/${branchId}`, {
+        params: { page: 0, size: 200 },
+      });
+      const data = res.data;
+      setOrders(Array.isArray(data?.content) ? data.content : Array.isArray(data) ? (data as unknown as OrderDto[]) : []);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {

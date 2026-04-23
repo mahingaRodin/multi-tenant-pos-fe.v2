@@ -75,7 +75,7 @@ export function BranchFormModal({
         email: email.trim() || undefined,
         openTime: openTime.trim() || undefined,
         closeTime: closeTime.trim() || undefined,
-        storeId,
+        storeId: storeId ?? undefined,
       };
 
       if (isEditing && branchToEdit.id) {

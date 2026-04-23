@@ -128,7 +128,7 @@ function RefundsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <StatusBadge variant="warning">{refund.reason || "Return"}</StatusBadge>
+                        <StatusBadge variant="pending">{refund.reason || "Return"}</StatusBadge>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
                         {refund.cashierName || "Unknown"}
