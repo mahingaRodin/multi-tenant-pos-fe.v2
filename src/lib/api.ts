@@ -2,9 +2,10 @@ import axios, { AxiosError } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
 export const API_BASE_URL = "http://pos.5.180.181.195.nip.io/msp";
+export const API_TEST_URL="http://localhost:5000/msp"
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_TEST_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 20000,
 });

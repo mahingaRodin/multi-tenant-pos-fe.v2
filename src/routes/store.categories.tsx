@@ -113,9 +113,7 @@ function CategoriesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold">Categories</h1>
-            <p className="text-sm text-muted-foreground">
-              Organize your products into categories.
-            </p>
+            <p className="text-sm text-muted-foreground">Organize your products into categories.</p>
           </div>
           <Button onClick={() => openModal()}>
             <Plus className="mr-2 size-4" />
@@ -181,9 +179,7 @@ function CategoriesPage() {
         <DialogContent className="sm:max-w-[400px]">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>
-                {categoryToEdit ? "Edit Category" : "New Category"}
-              </DialogTitle>
+              <DialogTitle>{categoryToEdit ? "Edit Category" : "New Category"}</DialogTitle>
             </DialogHeader>
             <div className="py-4 space-y-2">
               <Label>Name</Label>

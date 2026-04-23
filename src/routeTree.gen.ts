@@ -13,11 +13,19 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PosIndexRouteImport } from './routes/pos.index'
+import { Route as SuperAdminStoresRouteImport } from './routes/super-admin.stores'
 import { Route as SuperAdminDashboardRouteImport } from './routes/super-admin.dashboard'
+import { Route as StoreProductsRouteImport } from './routes/store.products'
+import { Route as StoreEmployeesRouteImport } from './routes/store.employees'
 import { Route as StoreDashboardRouteImport } from './routes/store.dashboard'
+import { Route as StoreCategoriesRouteImport } from './routes/store.categories'
+import { Route as StoreBranchesRouteImport } from './routes/store.branches'
 import { Route as PosShiftRouteImport } from './routes/pos.shift'
 import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
 import { Route as CustomerPortalRouteImport } from './routes/customer.portal'
+import { Route as CustomerOrdersRouteImport } from './routes/customer.orders'
+import { Route as BranchOrdersRouteImport } from './routes/branch.orders'
+import { Route as BranchInventoryRouteImport } from './routes/branch.inventory'
 import { Route as BranchDashboardRouteImport } from './routes/branch.dashboard'
 
 const SignupRoute = SignupRouteImport.update({
@@ -40,14 +48,39 @@ const PosIndexRoute = PosIndexRouteImport.update({
   path: '/pos/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuperAdminStoresRoute = SuperAdminStoresRouteImport.update({
+  id: '/super-admin/stores',
+  path: '/super-admin/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuperAdminDashboardRoute = SuperAdminDashboardRouteImport.update({
   id: '/super-admin/dashboard',
   path: '/super-admin/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreProductsRoute = StoreProductsRouteImport.update({
+  id: '/store/products',
+  path: '/store/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreEmployeesRoute = StoreEmployeesRouteImport.update({
+  id: '/store/employees',
+  path: '/store/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreDashboardRoute = StoreDashboardRouteImport.update({
   id: '/store/dashboard',
   path: '/store/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreCategoriesRoute = StoreCategoriesRouteImport.update({
+  id: '/store/categories',
+  path: '/store/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreBranchesRoute = StoreBranchesRouteImport.update({
+  id: '/store/branches',
+  path: '/store/branches',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PosShiftRoute = PosShiftRouteImport.update({
@@ -65,6 +98,21 @@ const CustomerPortalRoute = CustomerPortalRouteImport.update({
   path: '/customer/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerOrdersRoute = CustomerOrdersRouteImport.update({
+  id: '/customer/orders',
+  path: '/customer/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchOrdersRoute = BranchOrdersRouteImport.update({
+  id: '/branch/orders',
+  path: '/branch/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchInventoryRoute = BranchInventoryRouteImport.update({
+  id: '/branch/inventory',
+  path: '/branch/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BranchDashboardRoute = BranchDashboardRouteImport.update({
   id: '/branch/dashboard',
   path: '/branch/dashboard',
@@ -76,11 +124,19 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/inventory': typeof BranchInventoryRoute
+  '/branch/orders': typeof BranchOrdersRoute
+  '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/branches': typeof StoreBranchesRoute
+  '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
+  '/store/employees': typeof StoreEmployeesRoute
+  '/store/products': typeof StoreProductsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/stores': typeof SuperAdminStoresRoute
   '/pos/': typeof PosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -88,11 +144,19 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/inventory': typeof BranchInventoryRoute
+  '/branch/orders': typeof BranchOrdersRoute
+  '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/branches': typeof StoreBranchesRoute
+  '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
+  '/store/employees': typeof StoreEmployeesRoute
+  '/store/products': typeof StoreProductsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/stores': typeof SuperAdminStoresRoute
   '/pos': typeof PosIndexRoute
 }
 export interface FileRoutesById {
@@ -101,11 +165,19 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/inventory': typeof BranchInventoryRoute
+  '/branch/orders': typeof BranchOrdersRoute
+  '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/branches': typeof StoreBranchesRoute
+  '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
+  '/store/employees': typeof StoreEmployeesRoute
+  '/store/products': typeof StoreProductsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/stores': typeof SuperAdminStoresRoute
   '/pos/': typeof PosIndexRoute
 }
 export interface FileRouteTypes {
@@ -115,11 +187,19 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/branch/dashboard'
+    | '/branch/inventory'
+    | '/branch/orders'
+    | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/branches'
+    | '/store/categories'
     | '/store/dashboard'
+    | '/store/employees'
+    | '/store/products'
     | '/super-admin/dashboard'
+    | '/super-admin/stores'
     | '/pos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,11 +207,19 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/branch/dashboard'
+    | '/branch/inventory'
+    | '/branch/orders'
+    | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/branches'
+    | '/store/categories'
     | '/store/dashboard'
+    | '/store/employees'
+    | '/store/products'
     | '/super-admin/dashboard'
+    | '/super-admin/stores'
     | '/pos'
   id:
     | '__root__'
@@ -139,11 +227,19 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/branch/dashboard'
+    | '/branch/inventory'
+    | '/branch/orders'
+    | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/branches'
+    | '/store/categories'
     | '/store/dashboard'
+    | '/store/employees'
+    | '/store/products'
     | '/super-admin/dashboard'
+    | '/super-admin/stores'
     | '/pos/'
   fileRoutesById: FileRoutesById
 }
@@ -152,11 +248,19 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   BranchDashboardRoute: typeof BranchDashboardRoute
+  BranchInventoryRoute: typeof BranchInventoryRoute
+  BranchOrdersRoute: typeof BranchOrdersRoute
+  CustomerOrdersRoute: typeof CustomerOrdersRoute
   CustomerPortalRoute: typeof CustomerPortalRoute
   PosRefundsRoute: typeof PosRefundsRoute
   PosShiftRoute: typeof PosShiftRoute
+  StoreBranchesRoute: typeof StoreBranchesRoute
+  StoreCategoriesRoute: typeof StoreCategoriesRoute
   StoreDashboardRoute: typeof StoreDashboardRoute
+  StoreEmployeesRoute: typeof StoreEmployeesRoute
+  StoreProductsRoute: typeof StoreProductsRoute
   SuperAdminDashboardRoute: typeof SuperAdminDashboardRoute
+  SuperAdminStoresRoute: typeof SuperAdminStoresRoute
   PosIndexRoute: typeof PosIndexRoute
 }
 
@@ -190,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/super-admin/stores': {
+      id: '/super-admin/stores'
+      path: '/super-admin/stores'
+      fullPath: '/super-admin/stores'
+      preLoaderRoute: typeof SuperAdminStoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/super-admin/dashboard': {
       id: '/super-admin/dashboard'
       path: '/super-admin/dashboard'
@@ -197,11 +308,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAdminDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/products': {
+      id: '/store/products'
+      path: '/store/products'
+      fullPath: '/store/products'
+      preLoaderRoute: typeof StoreProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/employees': {
+      id: '/store/employees'
+      path: '/store/employees'
+      fullPath: '/store/employees'
+      preLoaderRoute: typeof StoreEmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store/dashboard': {
       id: '/store/dashboard'
       path: '/store/dashboard'
       fullPath: '/store/dashboard'
       preLoaderRoute: typeof StoreDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/categories': {
+      id: '/store/categories'
+      path: '/store/categories'
+      fullPath: '/store/categories'
+      preLoaderRoute: typeof StoreCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/branches': {
+      id: '/store/branches'
+      path: '/store/branches'
+      fullPath: '/store/branches'
+      preLoaderRoute: typeof StoreBranchesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pos/shift': {
@@ -225,6 +364,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customer/orders': {
+      id: '/customer/orders'
+      path: '/customer/orders'
+      fullPath: '/customer/orders'
+      preLoaderRoute: typeof CustomerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branch/orders': {
+      id: '/branch/orders'
+      path: '/branch/orders'
+      fullPath: '/branch/orders'
+      preLoaderRoute: typeof BranchOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branch/inventory': {
+      id: '/branch/inventory'
+      path: '/branch/inventory'
+      fullPath: '/branch/inventory'
+      preLoaderRoute: typeof BranchInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/branch/dashboard': {
       id: '/branch/dashboard'
       path: '/branch/dashboard'
@@ -240,11 +400,19 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   BranchDashboardRoute: BranchDashboardRoute,
+  BranchInventoryRoute: BranchInventoryRoute,
+  BranchOrdersRoute: BranchOrdersRoute,
+  CustomerOrdersRoute: CustomerOrdersRoute,
   CustomerPortalRoute: CustomerPortalRoute,
   PosRefundsRoute: PosRefundsRoute,
   PosShiftRoute: PosShiftRoute,
+  StoreBranchesRoute: StoreBranchesRoute,
+  StoreCategoriesRoute: StoreCategoriesRoute,
   StoreDashboardRoute: StoreDashboardRoute,
+  StoreEmployeesRoute: StoreEmployeesRoute,
+  StoreProductsRoute: StoreProductsRoute,
   SuperAdminDashboardRoute: SuperAdminDashboardRoute,
+  SuperAdminStoresRoute: SuperAdminStoresRoute,
   PosIndexRoute: PosIndexRoute,
 }
 export const routeTree = rootRouteImport

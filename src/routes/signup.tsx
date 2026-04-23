@@ -67,9 +67,7 @@ function SignupPage() {
           <span className="font-display text-xl font-bold">RetailOS</span>
         </div>
         <div>
-          <h2 className="font-display text-4xl font-bold leading-tight">
-            Get started in minutes.
-          </h2>
+          <h2 className="font-display text-4xl font-bold leading-tight">Get started in minutes.</h2>
           <p className="mt-4 text-primary-foreground/70">
             Create your account and start managing stores, branches, and sales.
           </p>
@@ -107,9 +105,7 @@ function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoComplete="email" {...register("email")} />
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone (optional)</Label>

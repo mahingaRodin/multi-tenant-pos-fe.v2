@@ -24,6 +24,17 @@ export interface UserDto {
   lastLogin?: string;
 }
 
+export interface StoreDto {
+  id?: string;
+  name: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  ownerId?: string;
+}
+
 export interface AuthResponse {
   jwt: string;
   message?: string;

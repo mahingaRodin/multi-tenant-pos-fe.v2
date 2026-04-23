@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, PackageSearch, Loader2, Image as ImageIcon } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  PackageSearch,
+  Loader2,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -188,7 +196,7 @@ function ProductsPage() {
                     </div>
                   </div>
                   {p.sku && <p className="text-xs text-muted-foreground">SKU: {p.sku}</p>}
-                  
+
                   <div className="mt-auto pt-4 flex gap-2 border-t mt-4 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button
                       variant="secondary"

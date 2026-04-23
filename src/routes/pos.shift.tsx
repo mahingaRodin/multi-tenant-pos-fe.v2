@@ -3,15 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Clock, DollarSign, Receipt, Banknote, Loader2, Calendar } from "lucide-react";
 import { format, differenceInMinutes } from "date-fns";
 import { toast } from "sonner";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -19,7 +11,13 @@ import { useAuthStore } from "@/stores/authStore";
 import type { ShiftReportDto, OrderDto } from "@/lib/types";
 import { fmtMoney } from "@/lib/format";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/pos/shift")({
@@ -57,14 +55,14 @@ function ShiftReportPage() {
         const res = await api.get<ShiftReportDto[]>(`/api/shift-reports`);
         if (mounted) {
           // Filter shifts for this cashier
-          const myShifts = (res.data || []).filter(s => !userId || s.cashierId === userId);
+          const myShifts = (res.data || []).filter((s) => !userId || s.cashierId === userId);
           setShifts(myShifts);
-          
+
           if (myShifts.length > 0 && selectedShiftId !== "current") {
-            setActiveShift(myShifts.find(s => s.id === selectedShiftId) || null);
+            setActiveShift(myShifts.find((s) => s.id === selectedShiftId) || null);
           }
         }
-        
+
         if (selectedShiftId === "current") {
           try {
             const cur = await api.get<ShiftReportDto>(`/api/shift-reports/current`);
@@ -85,22 +83,27 @@ function ShiftReportPage() {
         if (mounted) setLoading(false);
       }
     };
-    
+
     fetchShifts();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [userId, selectedShiftId]);
 
   const handleShiftChange = (val: string) => {
     setSelectedShiftId(val);
     if (val !== "current") {
-      setActiveShift(shifts.find(s => s.id === val) || null);
+      setActiveShift(shifts.find((s) => s.id === val) || null);
     } else {
       // Re-fetch current shift
-      api.get<ShiftReportDto>(`/api/shift-reports/current`).then(res => {
-        setActiveShift(res.data);
-      }).catch(() => {
-        setActiveShift(null);
-      });
+      api
+        .get<ShiftReportDto>(`/api/shift-reports/current`)
+        .then((res) => {
+          setActiveShift(res.data);
+        })
+        .catch(() => {
+          setActiveShift(null);
+        });
     }
   };
 
@@ -116,7 +119,7 @@ function ShiftReportPage() {
 
   const cashTotal = useMemo(() => {
     if (!activeShift?.paymentSummaries) return 0;
-    const cash = activeShift.paymentSummaries.find(p => p.type === "CASH");
+    const cash = activeShift.paymentSummaries.find((p) => p.type === "CASH");
     return cash?.totalAmount || 0;
   }, [activeShift]);
 
@@ -130,7 +133,7 @@ function ShiftReportPage() {
               Review your sales, orders, and payment summaries.
             </p>
           </div>
-          
+
           <div className="w-full sm:w-64">
             <Label className="text-xs text-muted-foreground mb-1 block">Select Shift</Label>
             <Select value={selectedShiftId} onValueChange={handleShiftChange}>
@@ -139,9 +142,11 @@ function ShiftReportPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="current">Current Active Shift</SelectItem>
-                {shifts.map(s => (
+                {shifts.map((s) => (
                   <SelectItem key={s.id} value={s.id!}>
-                    {s.shiftStart ? format(new Date(s.shiftStart), "MMM d, h:mm a") : s.id?.slice(0,8)} 
+                    {s.shiftStart
+                      ? format(new Date(s.shiftStart), "MMM d, h:mm a")
+                      : s.id?.slice(0, 8)}
                     {!s.shiftEnd ? " (Active)" : ""}
                   </SelectItem>
                 ))}
@@ -171,14 +176,25 @@ function ShiftReportPage() {
                 {!activeShift.shiftEnd ? "Active Shift" : "Completed Shift"}
               </StatusBadge>
               <span className="text-sm text-muted-foreground">
-                Started: {activeShift.shiftStart ? format(new Date(activeShift.shiftStart), "MMM d, yyyy h:mm a") : "Unknown"}
+                Started:{" "}
+                {activeShift.shiftStart
+                  ? format(new Date(activeShift.shiftStart), "MMM d, yyyy h:mm a")
+                  : "Unknown"}
               </span>
             </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <SummaryCard title="Total Sales" value={fmtMoney(activeShift.totalSales || 0)} icon={DollarSign} />
-              <SummaryCard title="Orders Processed" value={activeShift.totalOrders?.toString() || "0"} icon={Receipt} />
+              <SummaryCard
+                title="Total Sales"
+                value={fmtMoney(activeShift.totalSales || 0)}
+                icon={DollarSign}
+              />
+              <SummaryCard
+                title="Orders Processed"
+                value={activeShift.totalOrders?.toString() || "0"}
+                icon={Receipt}
+              />
               <SummaryCard title="Cash Collected" value={fmtMoney(cashTotal)} icon={Banknote} />
               <SummaryCard title="Shift Duration" value={durationStr} icon={Clock} />
             </div>
@@ -189,13 +205,35 @@ function ShiftReportPage() {
                 <h3 className="font-display text-lg font-bold mb-4">Hourly Sales Volume</h3>
                 <div className="h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={HOURLY_SALES} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                      <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${v}`} />
+                    <BarChart
+                      data={HOURLY_SALES}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="hsl(var(--muted))"
+                      />
+                      <XAxis
+                        dataKey="hour"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        tickFormatter={(v) => `$${v}`}
+                      />
                       <Tooltip
                         cursor={{ fill: "hsl(var(--muted)/0.5)" }}
-                        contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: "8px", border: "1px solid hsl(var(--border))" }}
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          borderRadius: "8px",
+                          border: "1px solid hsl(var(--border))",
+                        }}
                         formatter={(value: number) => [fmtMoney(value), "Sales"]}
                       />
                       <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
@@ -208,17 +246,14 @@ function ShiftReportPage() {
               <div className="rounded-xl border bg-card p-6 shadow-sm">
                 <h3 className="font-display text-lg font-bold mb-4">Payment Breakdown</h3>
                 <div className="space-y-4">
-                  {activeShift.paymentSummaries?.map(ps => (
+                  {activeShift.paymentSummaries?.map((ps) => (
                     <div key={ps.type} className="flex flex-col gap-1">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium capitalize">{ps.type.toLowerCase()}</span>
                         <span className="font-bold">{fmtMoney(ps.totalAmount)}</span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                        <div 
-                          className="h-full bg-primary" 
-                          style={{ width: `${ps.percentage}%` }}
-                        />
+                        <div className="h-full bg-primary" style={{ width: `${ps.percentage}%` }} />
                       </div>
                       <div className="text-xs text-muted-foreground text-right">
                         {ps.transactionCount} transactions ({ps.percentage}%)
@@ -258,9 +293,7 @@ function ShiftReportPage() {
                         <td className="px-6 py-4">
                           {order.createdAt ? format(new Date(order.createdAt), "h:mm a") : "-"}
                         </td>
-                        <td className="px-6 py-4 capitalize">
-                          {order.paymentType.toLowerCase()}
-                        </td>
+                        <td className="px-6 py-4 capitalize">{order.paymentType.toLowerCase()}</td>
                         <td className="px-6 py-4 text-right font-display font-bold">
                           {fmtMoney(order.totalAmount)}
                         </td>

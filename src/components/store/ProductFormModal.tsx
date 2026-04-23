@@ -144,7 +144,7 @@ export function ProductFormModal({
                 autoFocus
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Category *</Label>
               <Select value={categoryId} onValueChange={setCategoryId} disabled={loadingCats}>

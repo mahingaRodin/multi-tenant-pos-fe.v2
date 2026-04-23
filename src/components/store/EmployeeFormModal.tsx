@@ -139,36 +139,22 @@ export function EmployeeFormModal({
           <div className="grid grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label>First Name *</Label>
-              <Input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                autoFocus
-              />
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoFocus />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Last Name *</Label>
-              <Input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
 
             <div className="col-span-2 space-y-2">
               <Label>Email *</Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
 
             <div className="space-y-2">

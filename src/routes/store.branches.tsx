@@ -46,7 +46,8 @@ function BranchesPage() {
   }, [storeId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this branch? This action cannot be undone.")) return;
+    if (!confirm("Are you sure you want to delete this branch? This action cannot be undone."))
+      return;
     try {
       await api.delete(`/api/branches/${id}`);
       toast.success("Branch deleted");
@@ -88,7 +89,8 @@ function BranchesPage() {
             <GitBranch className="mb-4 size-12 text-muted-foreground/50" />
             <h3 className="font-display text-lg font-bold">No branches yet</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              Create your first branch to start managing inventory and processing sales for that location.
+              Create your first branch to start managing inventory and processing sales for that
+              location.
             </p>
             <Button className="mt-4" onClick={() => openModal()}>
               <Plus className="mr-2 size-4" />
@@ -127,9 +129,7 @@ function BranchesPage() {
                 <div className="space-y-3 flex-1 text-sm text-muted-foreground">
                   <div className="flex items-start gap-3">
                     <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span className="line-clamp-2">
-                      {branch.address || "No address provided"}
-                    </span>
+                    <span className="line-clamp-2">{branch.address || "No address provided"}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone className="size-4 shrink-0 text-primary" />
@@ -148,7 +148,7 @@ function BranchesPage() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="mt-6 pt-4 border-t">
                   <Button
                     variant="secondary"
