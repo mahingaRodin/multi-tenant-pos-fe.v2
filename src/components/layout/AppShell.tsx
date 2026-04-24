@@ -19,6 +19,8 @@ import {
   Moon,
   Sun,
   Menu,
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
@@ -35,9 +37,11 @@ interface NavItem {
 
 const NAV: Record<Role, NavItem[]> = {
   ROLE_SUPER_ADMIN: [
-    { to: "/super-admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/super-admin/stores", label: "Stores", icon: Store },
-    { to: "/super-admin/users", label: "Users", icon: Users },
+    { to: "/super-admin/dashboard", label: "Dashboard",  icon: LayoutDashboard },
+    { to: "/super-admin/stores",    label: "Stores",     icon: Store },
+    { to: "/super-admin/users",     label: "Users",      icon: Users },
+    { to: "/super-admin/analytics", label: "Analytics",  icon: BarChart3 },
+    { to: "/super-admin/settings",  label: "Settings",   icon: Settings },
   ],
   ROLE_STORE_ADMIN: [
     { to: "/store/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -110,79 +114,144 @@ export function AppShell({ allow, children }: AppShellProps) {
 
   const items = NAV[role];
 
+  const showNewSale = role === "ROLE_BRANCH_CASHIER";
+  const userInitials =
+    ((user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")).toUpperCase() ||
+    user?.email?.[0]?.toUpperCase() ||
+    "U";
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full">
+      {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
-          sidebarOpen ? "w-64" : "w-16",
+          "flex flex-col shrink-0 transition-all duration-200",
+          sidebarOpen ? "w-[220px]" : "w-16",
         )}
+        style={{ background: "#0F172A" }}
       >
-        <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-4">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-            <ShoppingBag className="size-5" />
+        {/* Logo */}
+        <div className={cn("flex items-center gap-2 px-5 h-16 shrink-0", !sidebarOpen && "justify-center px-0")}>
+          <div className="w-8 h-8 rounded bg-[#14B8A6] flex items-center justify-center shrink-0">
+            <ShoppingBag className="size-4 text-white" />
           </div>
-          {sidebarOpen && <span className="font-display text-lg font-bold">RetailOS</span>}
+          {sidebarOpen && (
+            <div>
+              <div className="text-white text-sm font-bold leading-none" style={{ fontFamily: "Syne, sans-serif" }}>POSify</div>
+              <div className="text-slate-400 text-[10px] leading-none mt-0.5">{user?.firstName ? `${user.firstName}'s Branch` : roleLabel(role)}</div>
+            </div>
+          )}
         </div>
 
-        <nav className="flex-1 space-y-1 p-3">
+        {/* New Sale CTA */}
+        {showNewSale && sidebarOpen && (
+          <div className="px-4 pb-3">
+            <Link
+              to="/pos"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-white transition-colors"
+              style={{ background: "#14B8A6" }}
+            >
+              <span className="text-lg leading-none font-bold">+</span>
+              New Sale
+            </Link>
+          </div>
+        )}
+
+        {/* Nav Items */}
+        <nav className="flex-1 py-2">
           {items.map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
                 title={item.label}
+                className={cn(
+                  "flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150 border-l-4",
+                  sidebarOpen ? "px-5" : "px-0 justify-center",
+                  active
+                    ? "border-[#14B8A6] bg-white/5 text-white"
+                    : "border-transparent text-slate-400 hover:text-white hover:bg-white/5",
+                )}
               >
-                <item.icon className="size-4 shrink-0" />
+                <item.icon className="size-[18px] shrink-0" />
                 {sidebarOpen && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t border-sidebar-border p-3">
+        {/* Footer */}
+        <div className="border-t border-slate-800 py-3">
           <button
-            onClick={() => {
-              logout();
-              navigate({ to: "/login" });
-            }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            title="Sign out"
+            onClick={() => navigate({ to: dashboardPathFor(role) })}
+            className={cn(
+              "flex items-center gap-3 w-full py-2 text-slate-400 hover:text-white transition-colors text-sm",
+              sidebarOpen ? "px-5" : "px-0 justify-center",
+            )}
+            title="Help Center"
+          >
+            <HelpCircle className="size-4 shrink-0" />
+            {sidebarOpen && <span>Help Center</span>}
+          </button>
+          <button
+            onClick={() => { logout(); navigate({ to: "/login" }); }}
+            className={cn(
+              "flex items-center gap-3 w-full py-2 text-slate-400 hover:text-white transition-colors text-sm",
+              sidebarOpen ? "px-5" : "px-0 justify-center",
+            )}
+            title="Logout"
           >
             <LogOut className="size-4 shrink-0" />
-            {sidebarOpen && <span>Sign out</span>}
+            {sidebarOpen && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-              <Menu className="size-4" />
-            </Button>
-            <div>
-              <p className="text-xs text-muted-foreground">{roleLabel(role)}</p>
-              <p className="text-sm font-medium">
-                {user?.firstName ?? ""} {user?.lastName ?? user?.email ?? ""}
-              </p>
+      {/* Main Area */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Top Header */}
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6 shrink-0">
+          <div className="flex items-center gap-3 flex-1">
+            <button onClick={toggleSidebar} className="text-slate-400 hover:text-slate-600 transition-colors mr-1">
+              <Menu className="size-5" />
+            </button>
+            <div className="relative flex-1 max-w-md">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full pl-9 pr-3 py-2 bg-muted rounded-lg text-sm border border-transparent text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-card"
+              />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
-              {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </Button>
+          <div className="flex items-center gap-2 ml-4">
+            {/* Register Status badge (super admin) */}
+            {role === "ROLE_SUPER_ADMIN" && (
+              <button className="hidden sm:flex border border-[#14B8A6] text-[#14B8A6] text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#14B8A6]/5 transition-colors">
+                Register Status
+              </button>
+            )}
+            {/* Bell */}
+            <button className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors relative">
+              <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+            {/* Theme toggle */}
+            <button onClick={toggleTheme} className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors">
+              {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            </button>
+            {/* User Avatar */}
+            <div className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-xs font-bold cursor-pointer ml-1">
+              {userInitials}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">{children ?? <Outlet />}</main>
+        <main className="flex-1 overflow-auto bg-background">{children ?? <Outlet />}</main>
       </div>
     </div>
   );
