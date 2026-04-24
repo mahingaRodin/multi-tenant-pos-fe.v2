@@ -1,40 +1,14 @@
+import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import {
-  Search,
-  Plus,
-  Edit2,
-  Trash2,
-  Store,
-  Loader2,
-  ShieldAlert,
-  CheckCircle2,
-  MoreVertical,
-  MapPin,
-  Mail,
-  Phone,
-  ChevronLeft,
-  ChevronRight,
-  User,
-} from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { StoreDto, PagedResponse, EStoreStatus } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { StoreFormModal } from "@/components/store/StoreFormModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/super-admin/stores")({
   component: () => (
@@ -44,21 +18,24 @@ export const Route = createFileRoute("/super-admin/stores")({
   ),
 });
 
-const STATUS_VARIANT: Record<string, "active" | "pending" | "danger"> = {
-  ACTIVE: "active",
-  PENDING: "pending",
-  BLOCKED: "danger",
-};
+function statusBadge(status?: string) {
+  if (status === "ACTIVE")
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#14B8A6]/10 text-[#14B8A6] uppercase tracking-wider">Active</span>;
+  if (status === "PENDING")
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Pending</span>;
+  return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">{status || "BLOCKED"}</span>;
+}
 
 function StoresPage() {
   const [stores, setStores] = useState<StoreDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [storeToEdit, setStoreToEdit] = useState<StoreDto | null>(null);
@@ -85,26 +62,15 @@ function StoresPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this store? This action cannot be undone."))
-      return;
-    try {
-      await api.delete(`/api/stores/${id}`);
-      toast.success("Store deleted successfully");
-      fetchStores();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err));
-    }
-  };
-
   const handleModerate = async (id: string, currentStatus?: EStoreStatus) => {
     const newStatus: EStoreStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
     const label = newStatus === "BLOCKED" ? "block" : "activate";
     if (!confirm(`Are you sure you want to ${label} this store?`)) return;
+    setOpenMenuId(null);
     try {
       await api.put(`/api/stores/${id}/moderate`, null, { params: { status: newStatus } });
-      toast.success(`Store ${label}ed successfully`);
-      fetchStores();
+      toast.success(`Store ${newStatus === "BLOCKED" ? "blocked" : "activated"} successfully`);
+      fetchStores(page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     }
@@ -113,6 +79,7 @@ function StoresPage() {
   const openModal = (store?: StoreDto) => {
     setStoreToEdit(store || null);
     setModalOpen(true);
+    setOpenMenuId(null);
   };
 
   const filteredStores = useMemo(() => {
@@ -127,201 +94,163 @@ function StoresPage() {
     );
   }, [stores, searchQuery]);
 
-  return (
-    <div className="flex h-full flex-col bg-muted/20">
-      <div className="border-b bg-card px-6 py-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-bold">Stores Management</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage all {totalElements} tenant stores on the platform.
-            </p>
-          </div>
-          <Button onClick={() => openModal()}>
-            <Plus className="mr-2 size-4" />
-            Add New Store
-          </Button>
-        </div>
+  const start = page * PAGE_SIZE + 1;
+  const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
-        <div className="mt-6">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search stores by brand, email, or ID..."
-              className="pl-9"
-            />
-          </div>
+  return (
+    <div className="min-h-full bg-[#F8FAFC] p-8 font-sans">
+      {/* Page Header */}
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Syne, sans-serif" }}>
+            All Stores
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage and monitor all {totalElements} retail locations.
+          </p>
+        </div>
+        <button
+          onClick={() => openModal()}
+          className="bg-[#14B8A6] hover:bg-teal-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+        >
+          <span className="text-base leading-none font-bold">+</span>
+          Add Store
+        </button>
+      </div>
+
+      {/* Toolbar */}
+      <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
+        <div className="relative flex-1 max-w-lg">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <input
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            placeholder="Search by store name, ID, or email..."
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-white"
+          />
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      {/* Data Grid */}
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
         {loading ? (
-          <div className="flex h-40 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredStores.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center shadow-sm">
-            <Store className="mb-4 size-12 text-muted-foreground/50" />
-            <h3 className="font-display text-lg font-bold">No stores found</h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-              {searchQuery
-                ? "Try a different search query."
-                : "There are no stores registered on the platform yet."}
-            </p>
-            {!searchQuery && (
-              <Button className="mt-4" onClick={() => openModal()}>
-                <Plus className="mr-2 size-4" />
-                Add Store
-              </Button>
-            )}
+          <div className="flex h-48 items-center justify-center">
+            <Loader2 className="size-8 animate-spin text-slate-400" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-              {filteredStores.map((store) => {
-                const status = store.status || "ACTIVE";
-                return (
-                  <div
-                    key={store.id}
-                    className="group flex flex-col rounded-xl border bg-card shadow-sm transition-all hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between p-6 border-b">
-                      <div className="flex items-center gap-4">
-                        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <Store className="size-6" />
-                        </div>
-                        <div>
-                          <h3
-                            className="font-display text-lg font-bold line-clamp-1"
-                            title={store.brand}
-                          >
-                            {store.brand}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <StatusBadge
-                              variant={STATUS_VARIANT[status] || "muted"}
-                              className="px-2 py-0.5 text-[10px]"
-                            >
-                              {status}
-                            </StatusBadge>
-                            {store.storeType && (
-                              <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                                {store.storeType}
-                              </span>
-                            )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">Store Name</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[20%]">Owner</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[14%]">Type</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[14%]">Status</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right w-[16%]">Created</th>
+                    <th className="px-6 py-3 w-[8%]" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredStores.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
+                        {searchQuery ? "No stores match your search." : "No stores registered yet."}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStores.map((store) => (
+                      <tr key={store.id} className="hover:bg-slate-50/60 transition-colors group relative">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-900 text-sm">{store.brand}</div>
+                          <div className="text-xs text-slate-400 mt-0.5 font-mono">
+                            {store.contact?.address || store.id?.slice(0, 12) + "..."}
                           </div>
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="size-4 text-muted-foreground" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openModal(store)}>
-                            <Edit2 className="mr-2 size-4" /> Edit Store
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => store.id && handleModerate(store.id, store.status)}
-                            className={
-                              status === "ACTIVE"
-                                ? "text-orange-500 focus:text-orange-500"
-                                : "text-green-500 focus:text-green-500"
-                            }
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-700">
+                          {store.storeAdmin
+                            ? `${store.storeAdmin.firstName || ""} ${store.storeAdmin.lastName || ""}`.trim() || store.storeAdmin.email
+                            : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {store.storeType ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-600 font-medium">
+                              {store.storeType}
+                            </span>
+                          ) : <span className="text-slate-400 text-sm">—</span>}
+                        </td>
+                        <td className="px-6 py-4">{statusBadge(store.status)}</td>
+                        <td className="px-6 py-4 text-right text-xs text-slate-500 font-mono">
+                          {store.createdAt ? format(new Date(store.createdAt), "yyyy-MM-dd") : "—"}
+                        </td>
+                        <td className="px-6 py-4 text-right relative">
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === store.id ? null : (store.id ?? null))}
+                            className="text-slate-400 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
                           >
-                            {status === "ACTIVE" ? (
-                              <>
-                                <ShieldAlert className="mr-2 size-4" /> Block Store
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="mr-2 size-4" /> Activate Store
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => store.id && handleDelete(store.id)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 size-4" /> Delete Store
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <div className="flex-1 p-6 space-y-3 text-sm text-muted-foreground">
-                      {store.description && (
-                        <p className="text-foreground/80 line-clamp-2 text-sm">{store.description}</p>
-                      )}
-                      <div className="flex items-start gap-3">
-                        <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
-                        <span className="line-clamp-2">
-                          {store.contact?.address || "No address provided"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Mail className="size-4 shrink-0 text-primary" />
-                        <span className="truncate">
-                          {store.contact?.email || "No email provided"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Phone className="size-4 shrink-0 text-primary" />
-                        <span>{store.contact?.phone || "No phone provided"}</span>
-                      </div>
-                      {store.storeAdmin && (
-                        <div className="flex items-center gap-3">
-                          <User className="size-4 shrink-0 text-primary" />
-                          <span className="truncate">
-                            Admin: {store.storeAdmin.firstName} {store.storeAdmin.lastName} ({store.storeAdmin.email})
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-muted/30 px-6 py-4 text-xs text-muted-foreground border-t flex justify-between items-center">
-                      <span>
-                        Registered:{" "}
-                        {store.createdAt ? format(new Date(store.createdAt), "MMM d, yyyy") : "-"}
-                      </span>
-                      <span className="font-mono">
-                        ID: {store.id?.slice(0, 8)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                            <MoreVertical className="size-4" />
+                          </button>
+                          {openMenuId === store.id && (
+                            <div className="absolute right-6 top-10 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-44 py-1 text-sm">
+                              <button
+                                onClick={() => openModal(store)}
+                                className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700"
+                              >
+                                Edit Store
+                              </button>
+                              <div className="border-t border-slate-100 my-1" />
+                              <button
+                                onClick={() => store.id && handleModerate(store.id, store.status)}
+                                className={`w-full text-left px-4 py-2 hover:bg-slate-50 ${store.status === "ACTIVE" ? "text-amber-600" : "text-[#14B8A6]"}`}
+                              >
+                                {store.status === "ACTIVE" ? "Block Store" : "Activate Store"}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
+            {/* Pagination Footer */}
+            <div className="bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                {totalElements > 0 ? `Showing ${start} to ${end} of ${totalElements} entries` : "No entries"}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
                 >
-                  <ChevronLeft className="mr-1 size-4" /> Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {page + 1} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  <ChevronLeft className="size-5" />
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
+                      page === i
+                        ? "bg-slate-200 text-slate-900 font-bold"
+                        : "hover:bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                {totalPages > 5 && <span className="text-slate-400 px-1">...</span>}
+                <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
+                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
                 >
-                  Next <ChevronRight className="ml-1 size-4" />
-                </Button>
+                  <ChevronRight className="size-5" />
+                </button>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
