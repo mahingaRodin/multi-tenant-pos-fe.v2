@@ -16,6 +16,7 @@ import { Route as PosIndexRouteImport } from './routes/pos.index'
 import { Route as SuperAdminUsersRouteImport } from './routes/super-admin.users'
 import { Route as SuperAdminStoresRouteImport } from './routes/super-admin.stores'
 import { Route as SuperAdminSettingsRouteImport } from './routes/super-admin.settings'
+import { Route as SuperAdminOrdersRouteImport } from './routes/super-admin.orders'
 import { Route as SuperAdminDashboardRouteImport } from './routes/super-admin.dashboard'
 import { Route as SuperAdminAnalyticsRouteImport } from './routes/super-admin.analytics'
 import { Route as StoreProductsRouteImport } from './routes/store.products'
@@ -64,6 +65,11 @@ const SuperAdminStoresRoute = SuperAdminStoresRouteImport.update({
 const SuperAdminSettingsRoute = SuperAdminSettingsRouteImport.update({
   id: '/super-admin/settings',
   path: '/super-admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperAdminOrdersRoute = SuperAdminOrdersRouteImport.update({
+  id: '/super-admin/orders',
+  path: '/super-admin/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperAdminDashboardRoute = SuperAdminDashboardRouteImport.update({
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
   '/super-admin/stores': typeof SuperAdminStoresRoute
   '/super-admin/users': typeof SuperAdminUsersRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
   '/super-admin/stores': typeof SuperAdminStoresRoute
   '/super-admin/users': typeof SuperAdminUsersRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
+  '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
   '/super-admin/stores': typeof SuperAdminStoresRoute
   '/super-admin/users': typeof SuperAdminUsersRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/store/products'
     | '/super-admin/analytics'
     | '/super-admin/dashboard'
+    | '/super-admin/orders'
     | '/super-admin/settings'
     | '/super-admin/stores'
     | '/super-admin/users'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/store/products'
     | '/super-admin/analytics'
     | '/super-admin/dashboard'
+    | '/super-admin/orders'
     | '/super-admin/settings'
     | '/super-admin/stores'
     | '/super-admin/users'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/store/products'
     | '/super-admin/analytics'
     | '/super-admin/dashboard'
+    | '/super-admin/orders'
     | '/super-admin/settings'
     | '/super-admin/stores'
     | '/super-admin/users'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   StoreProductsRoute: typeof StoreProductsRoute
   SuperAdminAnalyticsRoute: typeof SuperAdminAnalyticsRoute
   SuperAdminDashboardRoute: typeof SuperAdminDashboardRoute
+  SuperAdminOrdersRoute: typeof SuperAdminOrdersRoute
   SuperAdminSettingsRoute: typeof SuperAdminSettingsRoute
   SuperAdminStoresRoute: typeof SuperAdminStoresRoute
   SuperAdminUsersRoute: typeof SuperAdminUsersRoute
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/settings'
       fullPath: '/super-admin/settings'
       preLoaderRoute: typeof SuperAdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super-admin/orders': {
+      id: '/super-admin/orders'
+      path: '/super-admin/orders'
+      fullPath: '/super-admin/orders'
+      preLoaderRoute: typeof SuperAdminOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super-admin/dashboard': {
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreProductsRoute: StoreProductsRoute,
   SuperAdminAnalyticsRoute: SuperAdminAnalyticsRoute,
   SuperAdminDashboardRoute: SuperAdminDashboardRoute,
+  SuperAdminOrdersRoute: SuperAdminOrdersRoute,
   SuperAdminSettingsRoute: SuperAdminSettingsRoute,
   SuperAdminStoresRoute: SuperAdminStoresRoute,
   SuperAdminUsersRoute: SuperAdminUsersRoute,

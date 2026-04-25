@@ -39,6 +39,7 @@ const NAV: Record<Role, NavItem[]> = {
   ROLE_SUPER_ADMIN: [
     { to: "/super-admin/dashboard", label: "Dashboard",  icon: LayoutDashboard },
     { to: "/super-admin/stores",    label: "Stores",     icon: Store },
+    { to: "/super-admin/orders",    label: "Orders",     icon: Receipt },
     { to: "/super-admin/users",     label: "Users",      icon: Users },
     { to: "/super-admin/analytics", label: "Analytics",  icon: BarChart3 },
     { to: "/super-admin/settings",  label: "Settings",   icon: Settings },

@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { StoreDto, PagedResponse, EStoreStatus } from "@/lib/types";
+import { normalizeStoreStatus } from "@/lib/types";
 import { StoreFormModal } from "@/components/store/StoreFormModal";
 
 export const Route = createFileRoute("/super-admin/stores")({
@@ -18,12 +19,14 @@ export const Route = createFileRoute("/super-admin/stores")({
   ),
 });
 
-function statusBadge(status?: string) {
+function statusBadge(status?: string | null) {
   if (status === "ACTIVE")
     return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#14B8A6]/10 text-[#14B8A6] uppercase tracking-wider">Active</span>;
   if (status === "PENDING")
     return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Pending</span>;
-  return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">{status || "BLOCKED"}</span>;
+  if (status === "BLOCKED")
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">Blocked</span>;
+  return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-muted text-muted-foreground uppercase tracking-wider">Unknown</span>;
 }
 
 function StoresPage() {
@@ -44,10 +47,14 @@ function StoresPage() {
     setLoading(true);
     try {
       const res = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-        params: { page: p, size: PAGE_SIZE, direction: "DESC" },
+        params: { page: p, size: PAGE_SIZE, direction: "DESC", _t: Date.now() },
       });
       const data = res.data;
-      setStores(Array.isArray(data?.content) ? data.content : []);
+      const normalized = (Array.isArray(data?.content) ? data.content : []).map((s) => ({
+        ...s,
+        status: normalizeStoreStatus(s.status),
+      }));
+      setStores(normalized);
       setTotalPages(data?.totalPages ?? 0);
       setTotalElements(data?.totalElements ?? 0);
     } catch (err) {
@@ -62,16 +69,19 @@ function StoresPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const handleModerate = async (id: string, currentStatus?: EStoreStatus) => {
-    const newStatus: EStoreStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
-    const label = newStatus === "BLOCKED" ? "block" : "activate";
-    if (!confirm(`Are you sure you want to ${label} this store?`)) return;
+  const handleModerate = async (id: string, newStatus: EStoreStatus) => {
+    const labels: Record<EStoreStatus, string> = { ACTIVE: "activate", PENDING: "set to pending", BLOCKED: "block" };
+    if (!confirm(`Are you sure you want to ${labels[newStatus]} this store?`)) return;
     setOpenMenuId(null);
+    // Optimistically update UI immediately
+    setStores((prev) => prev.map((s) => s.id === id ? { ...s, status: newStatus } : s));
     try {
       await api.put(`/api/stores/${id}/moderate`, null, { params: { status: newStatus } });
-      toast.success(`Store ${newStatus === "BLOCKED" ? "blocked" : "activated"} successfully`);
+      toast.success(`Store status updated to ${newStatus.toLowerCase()}`);
       fetchStores(page);
     } catch (err) {
+      // Revert optimistic update on failure
+      fetchStores(page);
       toast.error(getApiErrorMessage(err));
     }
   };
@@ -98,14 +108,14 @@ function StoresPage() {
   const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] p-8 font-sans">
+    <div className="min-h-full bg-background p-8">
       {/* Page Header */}
       <div className="flex items-end justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Syne, sans-serif" }}>
+          <h1 className="text-2xl font-bold text-foreground">
             All Stores
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage and monitor all {totalElements} retail locations.
           </p>
         </div>
@@ -119,92 +129,110 @@ function StoresPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
+      <div className="bg-card border border-border p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
         <div className="relative flex-1 max-w-lg">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             placeholder="Search by store name, ID, or email..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] bg-card"
           />
         </div>
       </div>
 
       {/* Data Grid */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
         {loading ? (
           <div className="flex h-48 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-slate-400" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">Store Name</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[20%]">Owner</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[14%]">Type</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[14%]">Status</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right w-[16%]">Created</th>
+                  <tr className="bg-muted border-b border-border">
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-[28%]">Store Name</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-[20%]">Owner</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-[14%]">Type</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-[14%]">Status</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right w-[16%]">Created</th>
                     <th className="px-6 py-3 w-[8%]" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {filteredStores.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
+                      <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground text-sm">
                         {searchQuery ? "No stores match your search." : "No stores registered yet."}
                       </td>
                     </tr>
                   ) : (
                     filteredStores.map((store) => (
-                      <tr key={store.id} className="hover:bg-slate-50/60 transition-colors group relative">
+                      <tr key={store.id} className="hover:bg-muted/50 transition-colors group relative">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900 text-sm">{store.brand}</div>
-                          <div className="text-xs text-slate-400 mt-0.5 font-mono">
+                          <div className="font-medium text-card-foreground text-sm">{store.brand}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 font-mono">
                             {store.contact?.address || store.id?.slice(0, 12) + "..."}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700">
+                        <td className="px-6 py-4 text-sm text-card-foreground">
                           {store.storeAdmin
                             ? `${store.storeAdmin.firstName || ""} ${store.storeAdmin.lastName || ""}`.trim() || store.storeAdmin.email
                             : "—"}
                         </td>
                         <td className="px-6 py-4">
                           {store.storeType ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-600 font-medium">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] bg-muted text-muted-foreground font-medium">
                               {store.storeType}
                             </span>
-                          ) : <span className="text-slate-400 text-sm">—</span>}
+                          ) : <span className="text-muted-foreground text-sm">—</span>}
                         </td>
                         <td className="px-6 py-4">{statusBadge(store.status)}</td>
-                        <td className="px-6 py-4 text-right text-xs text-slate-500 font-mono">
+                        <td className="px-6 py-4 text-right text-xs text-muted-foreground font-mono">
                           {store.createdAt ? format(new Date(store.createdAt), "yyyy-MM-dd") : "—"}
                         </td>
                         <td className="px-6 py-4 text-right relative">
                           <button
                             onClick={() => setOpenMenuId(openMenuId === store.id ? null : (store.id ?? null))}
-                            className="text-slate-400 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
+                            className="text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
                           >
                             <MoreVertical className="size-4" />
                           </button>
                           {openMenuId === store.id && (
-                            <div className="absolute right-6 top-10 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-44 py-1 text-sm">
+                            <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-48 py-1 text-sm">
                               <button
                                 onClick={() => openModal(store)}
-                                className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700"
+                                className="w-full text-left px-4 py-2 hover:bg-muted text-card-foreground"
                               >
                                 Edit Store
                               </button>
-                              <div className="border-t border-slate-100 my-1" />
-                              <button
-                                onClick={() => store.id && handleModerate(store.id, store.status)}
-                                className={`w-full text-left px-4 py-2 hover:bg-slate-50 ${store.status === "ACTIVE" ? "text-amber-600" : "text-[#14B8A6]"}`}
-                              >
-                                {store.status === "ACTIVE" ? "Block Store" : "Activate Store"}
-                              </button>
+                              <div className="border-t border-border my-1" />
+                              {store.status !== "ACTIVE" && (
+                                <button
+                                  onClick={() => store.id && handleModerate(store.id, "ACTIVE")}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-[#14B8A6]"
+                                >
+                                  Activate Store
+                                </button>
+                              )}
+                              {store.status !== "PENDING" && (
+                                <button
+                                  onClick={() => store.id && handleModerate(store.id, "PENDING")}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-amber-500"
+                                >
+                                  Set to Pending
+                                </button>
+                              )}
+                              {store.status !== "BLOCKED" && (
+                                <button
+                                  onClick={() => store.id && handleModerate(store.id, "BLOCKED")}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-red-500"
+                                >
+                                  Block Store
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
@@ -216,15 +244,15 @@ function StoresPage() {
             </div>
 
             {/* Pagination Footer */}
-            <div className="bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between">
-              <span className="text-sm text-slate-500">
+            <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
                 {totalElements > 0 ? `Showing ${start} to ${end} of ${totalElements} entries` : "No entries"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
@@ -234,18 +262,18 @@ function StoresPage() {
                     onClick={() => setPage(i)}
                     className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
                       page === i
-                        ? "bg-slate-200 text-slate-900 font-bold"
-                        : "hover:bg-slate-100 text-slate-600"
+                        ? "bg-muted text-foreground font-bold"
+                        : "hover:bg-muted text-muted-foreground"
                     }`}
                   >
                     {i + 1}
                   </button>
                 ))}
-                {totalPages > 5 && <span className="text-slate-400 px-1">...</span>}
+                {totalPages > 5 && <span className="text-muted-foreground px-1">...</span>}
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronRight className="size-5" />
                 </button>
