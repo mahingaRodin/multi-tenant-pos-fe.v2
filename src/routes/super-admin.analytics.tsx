@@ -5,6 +5,7 @@ import { Loader2, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { StoreDto, PagedResponse } from "@/lib/types";
+import { normalizeStoreStatus } from "@/lib/types";
 import {
   AreaChart,
   Area,
@@ -54,7 +55,10 @@ function AnalyticsPage() {
         });
         if (mounted) {
           const data = res.data;
-          const list = Array.isArray(data?.content) ? data.content : [];
+          const list = (Array.isArray(data?.content) ? data.content : []).map((s) => ({
+            ...s,
+            status: normalizeStoreStatus(s.status),
+          }));
           setStores(list);
           setTotalStores(data?.totalElements ?? 0);
         }

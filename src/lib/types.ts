@@ -25,6 +25,14 @@ export interface UserDto {
 }
 
 export type EStoreStatus = "ACTIVE" | "PENDING" | "BLOCKED";
+export type RawStoreStatus = EStoreStatus | 0 | 1 | 2;
+
+const ORDINAL_STATUS: Record<number, EStoreStatus> = { 0: "ACTIVE", 1: "PENDING", 2: "BLOCKED" };
+export function normalizeStoreStatus(raw?: RawStoreStatus): EStoreStatus | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (typeof raw === "number") return ORDINAL_STATUS[raw] ?? "ACTIVE";
+  return raw as EStoreStatus;
+}
 
 export interface StoreContact {
   address?: string;
@@ -37,7 +45,7 @@ export interface StoreDto {
   brand: string;
   description?: string;
   storeType?: string;
-  status?: EStoreStatus;
+  status?: RawStoreStatus;
   contact?: StoreContact;
   storeAdmin?: UserDto;
   createdAt?: string;
