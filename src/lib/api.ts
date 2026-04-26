@@ -10,12 +10,17 @@ export const api = axios.create({
   timeout: 20000,
 });
 
-// Attach Bearer token
+// Attach Bearer token + cache-bust on GETs to bypass Spring @Cacheable
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers = config.headers ?? {};
     (config.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+  if (config.method?.toLowerCase() === "get") {
+    (config.headers as Record<string, string>)["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    (config.headers as Record<string, string>)["Pragma"] = "no-cache";
+    (config.headers as Record<string, string>)["Expires"] = "0";
   }
   return config;
 });

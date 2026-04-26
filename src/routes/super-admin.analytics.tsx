@@ -50,8 +50,10 @@ function AnalyticsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Vary size to bust Spring Pageable cache key
+        const bustSize = 100 + (Date.now() % 4);
         const res = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-          params: { page: 0, size: 100 },
+          params: { page: 0, size: bustSize, direction: "DESC" },
         });
         if (mounted) {
           const data = res.data;

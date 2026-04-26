@@ -42,21 +42,28 @@ function StoresPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [storeToEdit, setStoreToEdit] = useState<StoreDto | null>(null);
+  const [fetchNonce, setFetchNonce] = useState(0); // forces re-fetch after moderate
 
   const fetchStores = async (p = page) => {
     setLoading(true);
     try {
+      // Vary size to bust Spring's Pageable-based cache key (99-102 for 100-item fetch)
+      const bustSize = 100 + (Date.now() % 4);
       const res = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-        params: { page: p, size: PAGE_SIZE, direction: "DESC", _t: Date.now() },
+        params: { page: 0, size: bustSize, direction: "DESC" },
       });
       const data = res.data;
-      const normalized = (Array.isArray(data?.content) ? data.content : []).map((s) => ({
+      const all = (Array.isArray(data?.content) ? data.content : []).map((s) => ({
         ...s,
         status: normalizeStoreStatus(s.status),
       }));
-      setStores(normalized);
-      setTotalPages(data?.totalPages ?? 0);
-      setTotalElements(data?.totalElements ?? 0);
+      // Client-side paginate to PAGE_SIZE so cache-busting doesn't break UI
+      const start = p * PAGE_SIZE;
+      const pageItems = all.slice(start, start + PAGE_SIZE);
+      setStores(pageItems);
+      const total = data?.totalElements ?? all.length;
+      setTotalPages(Math.ceil(total / PAGE_SIZE));
+      setTotalElements(total);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -67,7 +74,7 @@ function StoresPage() {
   useEffect(() => {
     fetchStores(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, fetchNonce]);
 
   const handleModerate = async (id: string, newStatus: EStoreStatus) => {
     const labels: Record<EStoreStatus, string> = { ACTIVE: "activate", PENDING: "set to pending", BLOCKED: "block" };
@@ -78,10 +85,10 @@ function StoresPage() {
     try {
       await api.put(`/api/stores/${id}/moderate`, null, { params: { status: newStatus } });
       toast.success(`Store status updated to ${newStatus.toLowerCase()}`);
-      fetchStores(page);
+      setFetchNonce((n) => n + 1); // force fresh fetch from DB, bypassing cache
     } catch (err) {
       // Revert optimistic update on failure
-      fetchStores(page);
+      setFetchNonce((n) => n + 1);
       toast.error(getApiErrorMessage(err));
     }
   };
