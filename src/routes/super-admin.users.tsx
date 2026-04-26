@@ -37,8 +37,8 @@ function roleBadge(role?: Role) {
 
 function statusDot(active: boolean) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold ${active ? "bg-[#14B8A6]/10 text-[#14B8A6]" : "bg-slate-100 text-slate-400"}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-[#14B8A6]" : "bg-slate-300"}`} />
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold ${active ? "bg-[#14B8A6]/10 text-[#14B8A6]" : "bg-muted text-muted-foreground"}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-[#14B8A6]" : "bg-muted-foreground/40"}`} />
       {active ? "Active" : "Inactive"}
     </span>
   );
@@ -112,17 +112,17 @@ function UsersPage() {
   const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] p-8 font-sans">
+    <div className="min-h-full bg-background p-8 font-sans">
       {/* Page Header */}
       <div className="mb-2">
         <span className="text-[11px] font-bold text-[#14B8A6] uppercase tracking-widest">Enterprise Control</span>
       </div>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Syne, sans-serif" }}>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Syne, sans-serif" }}>
             User &amp; Role Management
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage system access levels and administrative assignments.
           </p>
         </div>
@@ -130,7 +130,7 @@ function UsersPage() {
           <select
             value={filterRole}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterRole(e.target.value)}
-            className="border border-slate-200 bg-white rounded-lg py-2 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
           >
             <option value="ALL">All Roles</option>
             {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
@@ -148,58 +148,58 @@ function UsersPage() {
           { label: "Managers", value: managerCount, note: "" },
           { label: "Cashiers", value: cashierCount, note: "" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">{stat.label}</p>
+          <div key={stat.label} className="bg-card p-6 rounded-xl border border-border shadow-sm">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{stat.label}</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900 font-mono">{stat.value}</span>
-              {stat.note && <span className="text-xs text-slate-400">{stat.note}</span>}
+              <span className="text-2xl font-bold text-card-foreground font-mono">{stat.value}</span>
+              {stat.note && <span className="text-xs text-muted-foreground">{stat.note}</span>}
             </div>
           </div>
         ))}
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
+      <div className="bg-card border border-border p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
         <div className="relative flex-1 max-w-lg">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or ID..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-card text-card-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* Staff Hierarchy Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-base font-semibold text-slate-900">Staff Hierarchy</h3>
-          <span className="text-xs text-slate-400 font-mono">{totalElements} total</span>
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/50">
+          <h3 className="text-base font-semibold text-card-foreground">Staff Hierarchy</h3>
+          <span className="text-xs text-muted-foreground font-mono">{totalElements} total</span>
         </div>
 
         {loading ? (
           <div className="flex h-48 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-slate-400" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Name &amp; Contact</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Assigned Store</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Joined</th>
+                  <tr className="bg-muted border-b border-border">
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Name &amp; Contact</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Assigned Store</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Joined</th>
                     <th className="px-6 py-3 w-10" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
+                      <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground text-sm">
                         {searchQuery || filterRole !== "ALL" ? "No users match your filters." : "No users found."}
                       </td>
                     </tr>
@@ -208,13 +208,13 @@ function UsersPage() {
                       const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
                       const isActive = !!(user.lastLogin);
                       return (
-                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group relative">
+                        <tr key={user.id} className="hover:bg-muted/50 transition-colors group relative">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <UserInitials name={fullName} />
                               <div>
-                                <p className="font-semibold text-sm text-slate-900">{fullName}</p>
-                                <p className="text-xs text-slate-500">{user.email}</p>
+                                <p className="font-semibold text-sm text-card-foreground">{fullName}</p>
+                                <p className="text-xs text-muted-foreground">{user.email}</p>
                               </div>
                             </div>
                           </td>
@@ -223,32 +223,32 @@ function UsersPage() {
                             <div>
                               {user.storeId ? (
                                 <>
-                                  <p className="text-sm font-medium text-slate-700">Store assigned</p>
-                                  <p className="text-[10px] text-slate-400 font-mono">ID: {user.storeId.slice(0, 8)}...</p>
+                                  <p className="text-sm font-medium text-card-foreground">Store assigned</p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">ID: {user.storeId.slice(0, 8)}...</p>
                                 </>
                               ) : (
-                                <span className="text-slate-400 text-sm">Unassigned</span>
+                                <span className="text-muted-foreground text-sm">Unassigned</span>
                               )}
                             </div>
                           </td>
                           <td className="px-6 py-4">{statusDot(isActive)}</td>
                           <td className="px-6 py-4">
-                            <p className="text-xs font-mono text-slate-500">
+                            <p className="text-xs font-mono text-muted-foreground">
                               {user.createdAt ? format(new Date(user.createdAt), "yyyy-MM-dd") : "—"}
                             </p>
                           </td>
                           <td className="px-6 py-4 text-right relative">
                             <button
                               onClick={() => setOpenMenuId(openMenuId === user.id ? null : (user.id ?? null))}
-                              className="text-slate-400 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
+                              className="text-muted-foreground hover:text-card-foreground transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
                             >
                               <MoreVertical className="size-4" />
                             </button>
                             {openMenuId === user.id && (
-                              <div className="absolute right-6 top-10 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-40 py-1 text-sm">
+                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-40 py-1 text-sm">
                                 <button
                                   onClick={() => { setOpenMenuId(null); }}
-                                  className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700"
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-card-foreground"
                                 >
                                   View Profile
                                 </button>
@@ -264,15 +264,15 @@ function UsersPage() {
             </div>
 
             {/* Pagination Footer */}
-            <div className="bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between">
-              <span className="text-sm text-slate-500">
+            <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
                 {totalElements > 0 ? `Showing ${start} to ${end} of ${totalElements} entries` : "No entries"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
@@ -282,18 +282,18 @@ function UsersPage() {
                     onClick={() => setPage(i)}
                     className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
                       page === i
-                        ? "bg-slate-200 text-slate-900 font-bold"
-                        : "hover:bg-slate-100 text-slate-600"
+                        ? "bg-muted text-card-foreground font-bold"
+                        : "hover:bg-muted text-muted-foreground"
                     }`}
                   >
                     {i + 1}
                   </button>
                 ))}
-                {totalPages > 5 && <span className="text-slate-400 px-1">...</span>}
+                {totalPages > 5 && <span className="text-muted-foreground px-1">...</span>}
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronRight className="size-5" />
                 </button>
