@@ -1,13 +1,18 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical, Plus, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { UserDto, PagedResponse, Role } from "@/lib/types";
+import type { UserDto, PagedResponse, Role, StoreDto, BranchDto } from "@/lib/types";
+
+interface EnrichedUser extends UserDto {
+  storeName?: string;
+  branchName?: string;
+}
 
 export const Route = createFileRoute("/super-admin/users")({
   component: () => (
@@ -55,7 +60,9 @@ function UserInitials({ name }: { name: string }) {
 }
 
 function UsersPage() {
-  const [users, setUsers] = useState<UserDto[]>([]);
+  const [users, setUsers] = useState<EnrichedUser[]>([]);
+  const [stores, setStores] = useState<StoreDto[]>([]);
+  const [branches, setBranches] = useState<BranchDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -66,21 +73,163 @@ function UsersPage() {
   const [totalElements, setTotalElements] = useState(0);
   const PAGE_SIZE = 10;
 
+  // Modal states for CRUD
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state for create/edit
+  const [formData, setFormData] = useState<Partial<UserDto>>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    role: "ROLE_CUSTOMER",
+    password: "",
+    branchId: "",
+    storeId: "",
+  });
+
   const fetchUsers = async (p = page) => {
     setLoading(true);
     try {
-      const res = await api.get<PagedResponse<UserDto>>("/api/users", {
-        params: { page: p, size: PAGE_SIZE },
-      });
-      const data = res.data;
-      setUsers(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages ?? 0);
-      setTotalElements(data?.totalElements ?? 0);
+      // Fetch users, stores, and branches in parallel
+      const [usersRes, storesRes, branchesRes] = await Promise.all([
+        api.get<PagedResponse<UserDto>>("/api/users", {
+          params: { page: p, size: PAGE_SIZE },
+        }),
+        api.get<PagedResponse<StoreDto>>("/api/stores", {
+          params: { page: 0, size: 1000 },
+        }),
+        api.get<PagedResponse<BranchDto>>("/api/branches", {
+          params: { page: 0, size: 1000 },
+        }),
+      ]);
+
+      const usersData = usersRes.data;
+      const storesData = storesRes.data?.content ?? [];
+      const branchesData = branchesRes.data?.content ?? [];
+
+      setStores(storesData);
+      setBranches(branchesData);
+
+      // Create lookup maps
+      const storeMap = new Map(storesData.map((s) => [s.id, s.brand || s.name || "Store"]));
+      const branchMap = new Map(branchesData.map((b) => [b.id, b.name || "Branch"]));
+
+      // Enrich users with store/branch names
+      const enrichedUsers: EnrichedUser[] = (usersData?.content ?? []).map((u) => ({
+        ...u,
+        storeName: u.storeId ? storeMap.get(u.storeId) : undefined,
+        branchName: u.branchId ? branchMap.get(u.branchId) : undefined,
+      }));
+
+      setUsers(enrichedUsers);
+      setTotalPages(usersData?.totalPages ?? 0);
+      setTotalElements(usersData?.totalElements ?? 0);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
+  };
+
+  // CRUD Handlers
+  const handleCreateUser = async () => {
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await api.post<UserDto>("/api/users", {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        password: formData.password,
+        branchId: formData.branchId || undefined,
+        storeId: formData.storeId || undefined,
+      });
+      toast.success("User created successfully");
+      setIsCreateModalOpen(false);
+      fetchUsers(page);
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        role: "ROLE_CUSTOMER",
+        password: "",
+        branchId: "",
+        storeId: "",
+      });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser?.id) return;
+    setIsSubmitting(true);
+    try {
+      await api.put(`/api/users/${selectedUser.id}`, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        branchId: formData.branchId || undefined,
+        storeId: formData.storeId || undefined,
+      });
+      toast.success("User updated successfully");
+      setIsEditModalOpen(false);
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: EnrichedUser) => {
+    const hasAssignments = user.storeId || user.branchId;
+    const message = hasAssignments
+      ? `⚠️ This user is assigned to ${user.storeName || "a store"}${user.branchName ? ` / ${user.branchName}` : ""}.\n\nDeleting will leave these unassigned. You can reassign them later from the Stores page.\n\nAre you sure you want to delete?`
+      : "Are you sure you want to delete this user? This action cannot be undone.";
+
+    if (!confirm(message)) return;
+    try {
+      await api.delete(`/api/users/${user.id}`);
+      toast.success("User deleted successfully");
+      if (hasAssignments) {
+        toast.info("Store/Branch is now unassigned. Visit Stores page to reassign.", { duration: 5000 });
+      }
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const openEditModal = (user: UserDto) => {
+    setSelectedUser(user);
+    setFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      password: "", // Don't populate password on edit
+      branchId: user.branchId,
+      storeId: user.storeId,
+    });
+    setIsEditModalOpen(true);
+    setOpenMenuId(null);
   };
 
   useEffect(() => {
@@ -137,6 +286,25 @@ function UsersPage() {
               <option key={val} value={val}>{cfg.label}</option>
             ))}
           </select>
+          <button
+            onClick={() => {
+              setFormData({
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                role: "ROLE_CUSTOMER",
+                password: "",
+                branchId: "",
+                storeId: "",
+              });
+              setIsCreateModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-lg font-medium transition-colors"
+          >
+            <Plus className="size-4" />
+            Create User
+          </button>
         </div>
       </div>
 
@@ -221,10 +389,17 @@ function UsersPage() {
                           <td className="px-6 py-4">{roleBadge(user.role)}</td>
                           <td className="px-6 py-4">
                             <div>
-                              {user.storeId ? (
+                              {user.storeId || user.branchId ? (
                                 <>
-                                  <p className="text-sm font-medium text-card-foreground">Store assigned</p>
-                                  <p className="text-[10px] text-muted-foreground font-mono">ID: {user.storeId.slice(0, 8)}...</p>
+                                  {user.storeName && (
+                                    <p className="text-sm font-medium text-card-foreground">{user.storeName}</p>
+                                  )}
+                                  {user.branchName && (
+                                    <p className="text-xs text-muted-foreground">{user.branchName}</p>
+                                  )}
+                                  {!user.storeName && !user.branchName && (
+                                    <p className="text-sm font-medium text-card-foreground">ID: {(user.storeId || user.branchId)?.slice(0, 8)}...</p>
+                                  )}
                                 </>
                               ) : (
                                 <span className="text-muted-foreground text-sm">Unassigned</span>
@@ -245,12 +420,27 @@ function UsersPage() {
                               <MoreVertical className="size-4" />
                             </button>
                             {openMenuId === user.id && (
-                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-40 py-1 text-sm">
+                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-44 py-1 text-sm">
                                 <button
-                                  onClick={() => { setOpenMenuId(null); }}
-                                  className="w-full text-left px-4 py-2 hover:bg-muted text-card-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(user);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-card-foreground flex items-center gap-2"
                                 >
-                                  View Profile
+                                  <Edit2 className="size-4" />
+                                  Edit User
+                                </button>
+                                <div className="border-t border-border my-1" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUser(user);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                >
+                                  <Trash2 className="size-4" />
+                                  Delete User
                                 </button>
                               </div>
                             )}
@@ -302,6 +492,229 @@ function UsersPage() {
           </>
         )}
       </div>
+
+      {/* Create User Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Create New User</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-1 hover:bg-muted rounded transition-colors"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.firstName || ""}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.lastName || ""}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                >
+                  {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
+                    <option key={val} value={val}>{cfg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Password *</label>
+                <input
+                  type="password"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
+                  <input
+                    type="text"
+                    value={formData.storeId || ""}
+                    onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Branch ID</label>
+                  <input
+                    type="text"
+                    value={formData.branchId || ""}
+                    onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateUser}
+                disabled={isSubmitting || !formData.email || !formData.password}
+                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Edit User</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1 hover:bg-muted rounded transition-colors"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.firstName || ""}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.lastName || ""}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                >
+                  {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
+                    <option key={val} value={val}>{cfg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
+                  <input
+                    type="text"
+                    value={formData.storeId || ""}
+                    onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Branch ID</label>
+                  <input
+                    type="text"
+                    value={formData.branchId || ""}
+                    onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateUser}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                Update User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
