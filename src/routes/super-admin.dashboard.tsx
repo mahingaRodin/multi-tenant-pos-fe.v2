@@ -36,9 +36,10 @@ function DashboardHome() {
   const fetchData = async (silent = false) => {
     if (silent) setRefreshing(true); else setLoading(true);
     try {
-      // 1. Fetch all stores — cache-bust so we always get fresh status from DB
+      // 1. Fetch all stores — vary size to bust Spring Pageable cache key
+      const bustSize = 100 + (Date.now() % 4);
       const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-        params: { page: 0, size: 100, _t: Date.now() },
+        params: { page: 0, size: bustSize, direction: "DESC" },
       });
       const storeData = storeRes.data;
       const storeList: StoreDto[] = (Array.isArray(storeData?.content) ? storeData.content : []).map((s) => ({

@@ -1,8 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
-export const API_BASE_URL = "http://pos.5.180.181.195.nip.io/msp";
-export const API_TEST_URL="http://localhost:5000/msp"
+export const API_BASE_URL = "http://pos.5.180.181.195.nip.io";
+export const API_TEST_URL = "http://localhost:5000";
 
 export const api = axios.create({
   baseURL: API_TEST_URL,
@@ -10,12 +10,17 @@ export const api = axios.create({
   timeout: 20000,
 });
 
-// Attach Bearer token
+// Attach Bearer token + cache-bust on GETs to bypass Spring @Cacheable
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers = config.headers ?? {};
     (config.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+  if (config.method?.toLowerCase() === "get") {
+    (config.headers as Record<string, string>)["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    (config.headers as Record<string, string>)["Pragma"] = "no-cache";
+    (config.headers as Record<string, string>)["Expires"] = "0";
   }
   return config;
 });

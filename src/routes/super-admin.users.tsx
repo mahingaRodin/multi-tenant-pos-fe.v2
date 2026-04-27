@@ -1,13 +1,19 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical, Plus, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import axios, { isAxiosError } from "axios";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { UserDto, PagedResponse, Role } from "@/lib/types";
+import type { UserDto, PagedResponse, Role, StoreDto, BranchDto, EUserStatus } from "@/lib/types";
+
+interface EnrichedUser extends UserDto {
+  storeName?: string;
+  branchName?: string;
+}
 
 export const Route = createFileRoute("/super-admin/users")({
   component: () => (
@@ -26,8 +32,14 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   ROLE_CUSTOMER:       { label: "Customer",         color: "bg-slate-100 text-slate-600" },
 };
 
-function roleBadge(role?: Role) {
-  const cfg = role ? (ROLE_LABELS[role] ?? { label: role, color: "bg-slate-100 text-slate-600" }) : { label: "—", color: "bg-slate-100 text-slate-400" };
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  ACTIVE:     { label: "Active",     color: "bg-emerald-100 text-emerald-700" },
+  SUSPENDED:  { label: "Suspended",  color: "bg-amber-100 text-amber-700" },
+  DISCHARGED: { label: "Discharged", color: "bg-red-100 text-red-700" },
+};
+
+function statusBadge(status?: EUserStatus) {
+  const cfg = status ? (STATUS_LABELS[status] ?? { label: status, color: "bg-slate-100 text-slate-600" }) : { label: "Unknown", color: "bg-slate-100 text-slate-400" };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${cfg.color}`}>
       {cfg.label}
@@ -35,11 +47,11 @@ function roleBadge(role?: Role) {
   );
 }
 
-function statusDot(active: boolean) {
+function roleBadge(role?: Role) {
+  const cfg = role ? (ROLE_LABELS[role] ?? { label: role, color: "bg-slate-100 text-slate-600" }) : { label: "—", color: "bg-slate-100 text-slate-400" };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold ${active ? "bg-[#14B8A6]/10 text-[#14B8A6]" : "bg-slate-100 text-slate-400"}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-[#14B8A6]" : "bg-slate-300"}`} />
-      {active ? "Active" : "Inactive"}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${cfg.color}`}>
+      {cfg.label}
     </span>
   );
 }
@@ -55,38 +67,246 @@ function UserInitials({ name }: { name: string }) {
 }
 
 function UsersPage() {
-  const [users, setUsers] = useState<UserDto[]>([]);
+  const [users, setUsers] = useState<EnrichedUser[]>([]);
+  const [stores, setStores] = useState<StoreDto[]>([]);
+  const [branches, setBranches] = useState<BranchDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<EUserStatus | "ALL">("ALL");
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const PAGE_SIZE = 10;
 
-  const fetchUsers = async (p = page) => {
+  // Modal states for CRUD
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state for create/edit
+  const [formData, setFormData] = useState<Partial<UserDto>>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    role: "ROLE_CUSTOMER",
+    password: "",
+    branchId: "",
+    storeId: "",
+  });
+
+  const fetchUsers = async (p = page, status = filterStatus) => {
     setLoading(true);
     try {
-      const res = await api.get<PagedResponse<UserDto>>("/api/users", {
-        params: { page: p, size: PAGE_SIZE },
-      });
-      const data = res.data;
-      setUsers(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages ?? 0);
-      setTotalElements(data?.totalElements ?? 0);
+      // Build params
+      const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
+      if (status !== "ALL") params.status = status;
+
+      console.log("Fetching users with params:", params);
+
+      // Fetch users, stores, and branches in parallel
+      const [usersRes, storesRes, branchesRes] = await Promise.all([
+        api.get<PagedResponse<UserDto>>("/api/users", { params }),
+        api.get<PagedResponse<StoreDto>>("/api/stores", {
+          params: { page: 0, size: 1000 },
+        }),
+        api.get<PagedResponse<BranchDto>>("/api/branches", {
+          params: { page: 0, size: 1000 },
+        }),
+      ]);
+
+      console.log("Users response:", usersRes.data);
+
+      const usersData = usersRes.data;
+      const storesData = storesRes.data?.content ?? [];
+      const branchesData = branchesRes.data?.content ?? [];
+
+      setStores(storesData);
+      setBranches(branchesData);
+
+      // Create lookup maps
+      const storeMap = new Map(storesData.map((s) => [s.id, s.brand || "Store"]));
+      const branchMap = new Map(branchesData.map((b) => [b.id, b.name || "Branch"]));
+
+      // Enrich users with store/branch names
+      const enrichedUsers: EnrichedUser[] = (usersData?.content ?? []).map((u) => ({
+        ...u,
+        storeName: u.storeId ? storeMap.get(u.storeId) : undefined,
+        branchName: u.branchId ? branchMap.get(u.branchId) : undefined,
+      }));
+
+      setUsers(enrichedUsers);
+      setTotalPages(usersData?.totalPages ?? 0);
+      setTotalElements(usersData?.totalElements ?? 0);
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      console.error("Fetch users error:", err);
+      const errorMsg = getApiErrorMessage(err);
+      // Check for 405 Method Not Allowed - indicates backend mapping issue
+      if (isAxiosError(err) && err.response?.status === 405) {
+        toast.error("API Error: The backend doesn't support this request. Check that the UserController has a @GetMapping method.");
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // CRUD Handlers
+  const handleCreateUser = async () => {
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await api.post<UserDto>("/api/users", {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        password: formData.password,
+        branchId: formData.branchId || undefined,
+        storeId: formData.storeId || undefined,
+      });
+      toast.success("User created successfully");
+      setIsCreateModalOpen(false);
+      fetchUsers(page);
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        role: "ROLE_CUSTOMER",
+        password: "",
+        branchId: "",
+        storeId: "",
+      });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser?.id) return;
+    setIsSubmitting(true);
+    try {
+      await api.put(`/api/users/${selectedUser.id}`, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        branchId: formData.branchId || undefined,
+        storeId: formData.storeId || undefined,
+      });
+      toast.success("User updated successfully");
+      setIsEditModalOpen(false);
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Lifecycle Handlers
+  const handleDischargeUser = async (user: EnrichedUser) => {
+    const hasAssignments = user.storeId || user.branchId;
+    const message = hasAssignments
+      ? `⚠️ This user is assigned to ${user.storeName || "a store"}${user.branchName ? ` / ${user.branchName}` : ""}.\n\nDischarging will keep these assignments for history, but the user will be permanently deactivated.\n\nAre you sure you want to discharge?`
+      : "Are you sure you want to discharge this user? They will be permanently deactivated.";
+
+    if (!confirm(message)) return;
+    try {
+      await api.patch(`/api/users/${user.id}/discharge`);
+      toast.success("User discharged successfully");
+      if (hasAssignments) {
+        toast.info("Store/Branch assignments preserved for history. Visit Stores page to reassign if needed.", { duration: 5000 });
+      }
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleSuspendUser = async (user: EnrichedUser) => {
+    if (!confirm(`Are you sure you want to suspend ${user.firstName || ""} ${user.lastName || ""}? They will be temporarily blocked from logging in.`)) return;
+    try {
+      await api.patch(`/api/users/${user.id}/suspend`);
+      toast.success("User suspended successfully");
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleActivateUser = async (user: EnrichedUser) => {
+    try {
+      await api.patch(`/api/users/${user.id}/activate`);
+      toast.success("User activated successfully");
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleDeleteUser = async (user: EnrichedUser) => {
+    // Check if user can be deleted (no assignments)
+    try {
+      const canDeleteRes = await api.get(`/api/users/${user.id}/can-delete`);
+      const canDelete = canDeleteRes.data;
+      
+      if (!canDelete) {
+        toast.error("Cannot delete user linked to store or branch. Use discharge instead.");
+        return;
+      }
+
+      if (!confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+      
+      await api.delete(`/api/users/${user.id}`);
+      toast.success("User deleted successfully");
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const openEditModal = (user: UserDto) => {
+    setSelectedUser(user);
+    setFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      password: "", // Don't populate password on edit
+      branchId: user.branchId,
+      storeId: user.storeId,
+    });
+    setIsEditModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  // Fetch on mount
   useEffect(() => {
-    fetchUsers(page);
+    fetchUsers(0, filterStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, []);
+
+  // Fetch when page or filterStatus changes
+  useEffect(() => {
+    fetchUsers(page, filterStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filterStatus]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -112,31 +332,60 @@ function UsersPage() {
   const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] p-8 font-sans">
+    <div className="min-h-full bg-background p-8 font-sans">
       {/* Page Header */}
       <div className="mb-2">
         <span className="text-[11px] font-bold text-[#14B8A6] uppercase tracking-widest">Enterprise Control</span>
       </div>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Syne, sans-serif" }}>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Syne, sans-serif" }}>
             User &amp; Role Management
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage system access levels and administrative assignments.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <select
+            value={filterStatus}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value as EUserStatus | "ALL")}
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+          >
+            <option value="ALL">All Status</option>
+            {Object.entries(STATUS_LABELS).map(([val, cfg]) => (
+              <option key={val} value={val}>{cfg.label}</option>
+            ))}
+          </select>
+          <select
             value={filterRole}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterRole(e.target.value)}
-            className="border border-slate-200 bg-white rounded-lg py-2 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
           >
             <option value="ALL">All Roles</option>
             {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
               <option key={val} value={val}>{cfg.label}</option>
             ))}
           </select>
+          <button
+            onClick={() => {
+              setFormData({
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                role: "ROLE_CUSTOMER",
+                password: "",
+                branchId: "",
+                storeId: "",
+              });
+              setIsCreateModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-lg font-medium transition-colors"
+          >
+            <Plus className="size-4" />
+            Create User
+          </button>
         </div>
       </div>
 
@@ -148,109 +397,171 @@ function UsersPage() {
           { label: "Managers", value: managerCount, note: "" },
           { label: "Cashiers", value: cashierCount, note: "" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">{stat.label}</p>
+          <div key={stat.label} className="bg-card p-6 rounded-xl border border-border shadow-sm">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{stat.label}</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900 font-mono">{stat.value}</span>
-              {stat.note && <span className="text-xs text-slate-400">{stat.note}</span>}
+              <span className="text-2xl font-bold text-card-foreground font-mono">{stat.value}</span>
+              {stat.note && <span className="text-xs text-muted-foreground">{stat.note}</span>}
             </div>
           </div>
         ))}
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
+      <div className="bg-card border border-border p-4 rounded-lg flex items-center justify-between mb-4 shadow-sm">
         <div className="relative flex-1 max-w-lg">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or ID..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-card text-card-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* Staff Hierarchy Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-base font-semibold text-slate-900">Staff Hierarchy</h3>
-          <span className="text-xs text-slate-400 font-mono">{totalElements} total</span>
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/50">
+          <h3 className="text-base font-semibold text-card-foreground">Staff Hierarchy</h3>
+          <span className="text-xs text-muted-foreground font-mono">{totalElements} total</span>
         </div>
 
         {loading ? (
           <div className="flex h-48 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-slate-400" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Name &amp; Contact</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Assigned Store</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Joined</th>
+                  <tr className="bg-muted border-b border-border">
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Name &amp; Contact</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Assigned Store</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Joined</th>
                     <th className="px-6 py-3 w-10" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
-                        {searchQuery || filterRole !== "ALL" ? "No users match your filters." : "No users found."}
+                      <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground text-sm">
+                        {searchQuery || filterRole !== "ALL" || filterStatus !== "ALL" ? "No users match your filters." : "No users found."}
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((user) => {
                       const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
-                      const isActive = !!(user.lastLogin);
                       return (
-                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group relative">
+                        <tr key={user.id} className="hover:bg-muted/50 transition-colors group relative">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <UserInitials name={fullName} />
                               <div>
-                                <p className="font-semibold text-sm text-slate-900">{fullName}</p>
-                                <p className="text-xs text-slate-500">{user.email}</p>
+                                <p className="font-semibold text-sm text-card-foreground">{fullName}</p>
+                                <p className="text-xs text-muted-foreground">{user.email}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">{roleBadge(user.role)}</td>
                           <td className="px-6 py-4">
                             <div>
-                              {user.storeId ? (
+                              {user.storeId || user.branchId ? (
                                 <>
-                                  <p className="text-sm font-medium text-slate-700">Store assigned</p>
-                                  <p className="text-[10px] text-slate-400 font-mono">ID: {user.storeId.slice(0, 8)}...</p>
+                                  {user.storeName && (
+                                    <p className="text-sm font-medium text-card-foreground">{user.storeName}</p>
+                                  )}
+                                  {user.branchName && (
+                                    <p className="text-xs text-muted-foreground">{user.branchName}</p>
+                                  )}
+                                  {!user.storeName && !user.branchName && (
+                                    <p className="text-sm font-medium text-card-foreground">ID: {(user.storeId || user.branchId)?.slice(0, 8)}...</p>
+                                  )}
                                 </>
                               ) : (
-                                <span className="text-slate-400 text-sm">Unassigned</span>
+                                <span className="text-muted-foreground text-sm">Unassigned</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">{statusDot(isActive)}</td>
+                          <td className="px-6 py-4">{statusBadge(user.userStatus)}</td>
                           <td className="px-6 py-4">
-                            <p className="text-xs font-mono text-slate-500">
+                            <p className="text-xs font-mono text-muted-foreground">
                               {user.createdAt ? format(new Date(user.createdAt), "yyyy-MM-dd") : "—"}
                             </p>
                           </td>
                           <td className="px-6 py-4 text-right relative">
                             <button
                               onClick={() => setOpenMenuId(openMenuId === user.id ? null : (user.id ?? null))}
-                              className="text-slate-400 hover:text-slate-700 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
+                              className="text-muted-foreground hover:text-card-foreground transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
                             >
                               <MoreVertical className="size-4" />
                             </button>
                             {openMenuId === user.id && (
-                              <div className="absolute right-6 top-10 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-40 py-1 text-sm">
+                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-48 py-1 text-sm">
                                 <button
-                                  onClick={() => { setOpenMenuId(null); }}
-                                  className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditModal(user);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-card-foreground flex items-center gap-2"
                                 >
-                                  View Profile
+                                  <Edit2 className="size-4" />
+                                  Edit User
+                                </button>
+                                
+                                {/* Status Actions */}
+                                {user.userStatus === "ACTIVE" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSuspendUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">⏸</span>
+                                    Suspend
+                                  </button>
+                                )}
+                                
+                                {user.userStatus === "SUSPENDED" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleActivateUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">▶</span>
+                                    Activate
+                                  </button>
+                                )}
+                                
+                                {user.userStatus !== "DISCHARGED" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDischargeUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">🚪</span>
+                                    Discharge
+                                  </button>
+                                )}
+                                
+                                <div className="border-t border-border my-1" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUser(user);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                >
+                                  <Trash2 className="size-4" />
+                                  Delete
                                 </button>
                               </div>
                             )}
@@ -264,15 +575,15 @@ function UsersPage() {
             </div>
 
             {/* Pagination Footer */}
-            <div className="bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between">
-              <span className="text-sm text-slate-500">
+            <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
                 {totalElements > 0 ? `Showing ${start} to ${end} of ${totalElements} entries` : "No entries"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronLeft className="size-5" />
                 </button>
@@ -282,18 +593,18 @@ function UsersPage() {
                     onClick={() => setPage(i)}
                     className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
                       page === i
-                        ? "bg-slate-200 text-slate-900 font-bold"
-                        : "hover:bg-slate-100 text-slate-600"
+                        ? "bg-muted text-card-foreground font-bold"
+                        : "hover:bg-muted text-muted-foreground"
                     }`}
                   >
                     {i + 1}
                   </button>
                 ))}
-                {totalPages > 5 && <span className="text-slate-400 px-1">...</span>}
+                {totalPages > 5 && <span className="text-muted-foreground px-1">...</span>}
                 <button
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage((p) => p + 1)}
-                  className="p-1 text-slate-500 hover:bg-slate-100 rounded disabled:opacity-40 transition-colors"
+                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
                 >
                   <ChevronRight className="size-5" />
                 </button>
@@ -302,6 +613,229 @@ function UsersPage() {
           </>
         )}
       </div>
+
+      {/* Create User Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Create New User</h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-1 hover:bg-muted rounded transition-colors"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.firstName || ""}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.lastName || ""}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                >
+                  {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
+                    <option key={val} value={val}>{cfg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Password *</label>
+                <input
+                  type="password"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
+                  <input
+                    type="text"
+                    value={formData.storeId || ""}
+                    onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Branch ID</label>
+                  <input
+                    type="text"
+                    value={formData.branchId || ""}
+                    onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateUser}
+                disabled={isSubmitting || !formData.email || !formData.password}
+                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Edit User</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1 hover:bg-muted rounded transition-colors"
+              >
+                <X className="size-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.firstName || ""}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.lastName || ""}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                >
+                  {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
+                    <option key={val} value={val}>{cfg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
+                  <input
+                    type="text"
+                    value={formData.storeId || ""}
+                    onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Branch ID</label>
+                  <input
+                    type="text"
+                    value={formData.branchId || ""}
+                    onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateUser}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                Update User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
