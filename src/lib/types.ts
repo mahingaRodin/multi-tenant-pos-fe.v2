@@ -9,6 +9,8 @@ export type Role =
 
 export type PaymentType = "CASH" | "UPI" | "CARD";
 
+export type EOrderStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
+
 export interface UserDto {
   id?: string;
   firstName?: string;
@@ -116,6 +118,7 @@ export interface OrderDto {
   cashierId?: string;
   items: OrderItemDto[];
   paymentType: PaymentType;
+  status?: EOrderStatus;
 }
 
 export interface BranchDto {
