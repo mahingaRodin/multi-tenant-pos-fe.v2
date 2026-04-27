@@ -11,6 +11,8 @@ export type PaymentType = "CASH" | "UPI" | "CARD";
 
 export type EOrderStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
 
+export type EUserStatus = "ACTIVE" | "SUSPENDED" | "DISCHARGED";
+
 export interface UserDto {
   id?: string;
   firstName?: string;
@@ -18,6 +20,7 @@ export interface UserDto {
   email: string;
   phone?: string;
   role?: Role;
+  userStatus?: EUserStatus;
   password?: string;
   branchId?: string;
   storeId?: string;

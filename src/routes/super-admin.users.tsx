@@ -3,11 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical, Plus, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import axios, { isAxiosError } from "axios";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { UserDto, PagedResponse, Role, StoreDto, BranchDto } from "@/lib/types";
+import type { UserDto, PagedResponse, Role, StoreDto, BranchDto, EUserStatus } from "@/lib/types";
 
 interface EnrichedUser extends UserDto {
   storeName?: string;
@@ -31,8 +32,14 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   ROLE_CUSTOMER:       { label: "Customer",         color: "bg-slate-100 text-slate-600" },
 };
 
-function roleBadge(role?: Role) {
-  const cfg = role ? (ROLE_LABELS[role] ?? { label: role, color: "bg-slate-100 text-slate-600" }) : { label: "—", color: "bg-slate-100 text-slate-400" };
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  ACTIVE:     { label: "Active",     color: "bg-emerald-100 text-emerald-700" },
+  SUSPENDED:  { label: "Suspended",  color: "bg-amber-100 text-amber-700" },
+  DISCHARGED: { label: "Discharged", color: "bg-red-100 text-red-700" },
+};
+
+function statusBadge(status?: EUserStatus) {
+  const cfg = status ? (STATUS_LABELS[status] ?? { label: status, color: "bg-slate-100 text-slate-600" }) : { label: "Unknown", color: "bg-slate-100 text-slate-400" };
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${cfg.color}`}>
       {cfg.label}
@@ -40,11 +47,11 @@ function roleBadge(role?: Role) {
   );
 }
 
-function statusDot(active: boolean) {
+function roleBadge(role?: Role) {
+  const cfg = role ? (ROLE_LABELS[role] ?? { label: role, color: "bg-slate-100 text-slate-600" }) : { label: "—", color: "bg-slate-100 text-slate-400" };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold ${active ? "bg-[#14B8A6]/10 text-[#14B8A6]" : "bg-muted text-muted-foreground"}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-[#14B8A6]" : "bg-muted-foreground/40"}`} />
-      {active ? "Active" : "Inactive"}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${cfg.color}`}>
+      {cfg.label}
     </span>
   );
 }
@@ -67,6 +74,7 @@ function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<EUserStatus | "ALL">("ALL");
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -91,14 +99,18 @@ function UsersPage() {
     storeId: "",
   });
 
-  const fetchUsers = async (p = page) => {
+  const fetchUsers = async (p = page, status = filterStatus) => {
     setLoading(true);
     try {
+      // Build params
+      const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
+      if (status !== "ALL") params.status = status;
+
+      console.log("Fetching users with params:", params);
+
       // Fetch users, stores, and branches in parallel
       const [usersRes, storesRes, branchesRes] = await Promise.all([
-        api.get<PagedResponse<UserDto>>("/api/users", {
-          params: { page: p, size: PAGE_SIZE },
-        }),
+        api.get<PagedResponse<UserDto>>("/api/users", { params }),
         api.get<PagedResponse<StoreDto>>("/api/stores", {
           params: { page: 0, size: 1000 },
         }),
@@ -106,6 +118,8 @@ function UsersPage() {
           params: { page: 0, size: 1000 },
         }),
       ]);
+
+      console.log("Users response:", usersRes.data);
 
       const usersData = usersRes.data;
       const storesData = storesRes.data?.content ?? [];
@@ -115,7 +129,7 @@ function UsersPage() {
       setBranches(branchesData);
 
       // Create lookup maps
-      const storeMap = new Map(storesData.map((s) => [s.id, s.brand || s.name || "Store"]));
+      const storeMap = new Map(storesData.map((s) => [s.id, s.brand || "Store"]));
       const branchMap = new Map(branchesData.map((b) => [b.id, b.name || "Branch"]));
 
       // Enrich users with store/branch names
@@ -129,7 +143,14 @@ function UsersPage() {
       setTotalPages(usersData?.totalPages ?? 0);
       setTotalElements(usersData?.totalElements ?? 0);
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      console.error("Fetch users error:", err);
+      const errorMsg = getApiErrorMessage(err);
+      // Check for 405 Method Not Allowed - indicates backend mapping issue
+      if (isAxiosError(err) && err.response?.status === 405) {
+        toast.error("API Error: The backend doesn't support this request. Check that the UserController has a @GetMapping method.");
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -197,19 +218,62 @@ function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async (user: EnrichedUser) => {
+  // Lifecycle Handlers
+  const handleDischargeUser = async (user: EnrichedUser) => {
     const hasAssignments = user.storeId || user.branchId;
     const message = hasAssignments
-      ? `⚠️ This user is assigned to ${user.storeName || "a store"}${user.branchName ? ` / ${user.branchName}` : ""}.\n\nDeleting will leave these unassigned. You can reassign them later from the Stores page.\n\nAre you sure you want to delete?`
-      : "Are you sure you want to delete this user? This action cannot be undone.";
+      ? `⚠️ This user is assigned to ${user.storeName || "a store"}${user.branchName ? ` / ${user.branchName}` : ""}.\n\nDischarging will keep these assignments for history, but the user will be permanently deactivated.\n\nAre you sure you want to discharge?`
+      : "Are you sure you want to discharge this user? They will be permanently deactivated.";
 
     if (!confirm(message)) return;
     try {
+      await api.patch(`/api/users/${user.id}/discharge`);
+      toast.success("User discharged successfully");
+      if (hasAssignments) {
+        toast.info("Store/Branch assignments preserved for history. Visit Stores page to reassign if needed.", { duration: 5000 });
+      }
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleSuspendUser = async (user: EnrichedUser) => {
+    if (!confirm(`Are you sure you want to suspend ${user.firstName || ""} ${user.lastName || ""}? They will be temporarily blocked from logging in.`)) return;
+    try {
+      await api.patch(`/api/users/${user.id}/suspend`);
+      toast.success("User suspended successfully");
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleActivateUser = async (user: EnrichedUser) => {
+    try {
+      await api.patch(`/api/users/${user.id}/activate`);
+      toast.success("User activated successfully");
+      fetchUsers(page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
+  };
+
+  const handleDeleteUser = async (user: EnrichedUser) => {
+    // Check if user can be deleted (no assignments)
+    try {
+      const canDeleteRes = await api.get(`/api/users/${user.id}/can-delete`);
+      const canDelete = canDeleteRes.data;
+      
+      if (!canDelete) {
+        toast.error("Cannot delete user linked to store or branch. Use discharge instead.");
+        return;
+      }
+
+      if (!confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) return;
+      
       await api.delete(`/api/users/${user.id}`);
       toast.success("User deleted successfully");
-      if (hasAssignments) {
-        toast.info("Store/Branch is now unassigned. Visit Stores page to reassign.", { duration: 5000 });
-      }
       fetchUsers(page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -232,10 +296,17 @@ function UsersPage() {
     setOpenMenuId(null);
   };
 
+  // Fetch on mount
   useEffect(() => {
-    fetchUsers(page);
+    fetchUsers(0, filterStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, []);
+
+  // Fetch when page or filterStatus changes
+  useEffect(() => {
+    fetchUsers(page, filterStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filterStatus]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -276,6 +347,16 @@ function UsersPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <select
+            value={filterStatus}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value as EUserStatus | "ALL")}
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+          >
+            <option value="ALL">All Status</option>
+            {Object.entries(STATUS_LABELS).map(([val, cfg]) => (
+              <option key={val} value={val}>{cfg.label}</option>
+            ))}
+          </select>
           <select
             value={filterRole}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterRole(e.target.value)}
@@ -368,13 +449,12 @@ function UsersPage() {
                   {filteredUsers.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground text-sm">
-                        {searchQuery || filterRole !== "ALL" ? "No users match your filters." : "No users found."}
+                        {searchQuery || filterRole !== "ALL" || filterStatus !== "ALL" ? "No users match your filters." : "No users found."}
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((user) => {
                       const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
-                      const isActive = !!(user.lastLogin);
                       return (
                         <tr key={user.id} className="hover:bg-muted/50 transition-colors group relative">
                           <td className="px-6 py-4">
@@ -406,7 +486,7 @@ function UsersPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">{statusDot(isActive)}</td>
+                          <td className="px-6 py-4">{statusBadge(user.userStatus)}</td>
                           <td className="px-6 py-4">
                             <p className="text-xs font-mono text-muted-foreground">
                               {user.createdAt ? format(new Date(user.createdAt), "yyyy-MM-dd") : "—"}
@@ -420,7 +500,7 @@ function UsersPage() {
                               <MoreVertical className="size-4" />
                             </button>
                             {openMenuId === user.id && (
-                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-44 py-1 text-sm">
+                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-48 py-1 text-sm">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -431,6 +511,47 @@ function UsersPage() {
                                   <Edit2 className="size-4" />
                                   Edit User
                                 </button>
+                                
+                                {/* Status Actions */}
+                                {user.userStatus === "ACTIVE" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSuspendUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">⏸</span>
+                                    Suspend
+                                  </button>
+                                )}
+                                
+                                {user.userStatus === "SUSPENDED" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleActivateUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-emerald-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">▶</span>
+                                    Activate
+                                  </button>
+                                )}
+                                
+                                {user.userStatus !== "DISCHARGED" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDischargeUser(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                  >
+                                    <span className="size-4">🚪</span>
+                                    Discharge
+                                  </button>
+                                )}
+                                
                                 <div className="border-t border-border my-1" />
                                 <button
                                   onClick={(e) => {
@@ -440,7 +561,7 @@ function UsersPage() {
                                   className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
                                 >
                                   <Trash2 className="size-4" />
-                                  Delete User
+                                  Delete
                                 </button>
                               </div>
                             )}
