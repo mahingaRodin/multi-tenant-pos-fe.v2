@@ -107,6 +107,7 @@ function UsersPage() {
       if (status !== "ALL") params.status = status;
 
       console.log("Fetching users with params:", params);
+      console.log("API baseURL:", api.defaults.baseURL);
 
       // Fetch users, stores, and branches in parallel
       const [usersRes, storesRes, branchesRes] = await Promise.all([
@@ -144,12 +145,13 @@ function UsersPage() {
       setTotalElements(usersData?.totalElements ?? 0);
     } catch (err) {
       console.error("Fetch users error:", err);
-      const errorMsg = getApiErrorMessage(err);
-      // Check for 405 Method Not Allowed - indicates backend mapping issue
-      if (isAxiosError(err) && err.response?.status === 405) {
-        toast.error("API Error: The backend doesn't support this request. Check that the UserController has a @GetMapping method.");
+      if (isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data as { message?: string; error?: string };
+        console.error("Error details:", { status, data, url: err.config?.url, method: err.config?.method });
+        toast.error(`API Error ${status}: ${data?.message || data?.error || err.message}`);
       } else {
-        toast.error(errorMsg);
+        toast.error(getApiErrorMessage(err));
       }
     } finally {
       setLoading(false);
