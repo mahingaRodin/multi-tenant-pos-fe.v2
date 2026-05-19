@@ -1,8 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
-export const API_BASE_URL = "http://pos.5.180.181.195.nip.io/msp";
-export const API_TEST_URL = "http://localhost:5000/msp";
+export const API_BASE_URL = "http://pos.185.229.227.70.nip.io";
+export const API_TEST_URL = "http://localhost:5000";
 
 export const api = axios.create({
   baseURL: API_TEST_URL,
