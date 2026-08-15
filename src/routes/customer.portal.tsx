@@ -1,246 +1,165 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
-import { ShoppingBag, Search, Loader2, Image as ImageIcon, Filter } from "lucide-react";
-
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Heart, Search, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useAuthStore } from "@/stores/authStore";
-import type { ProductDto, CategoryDto } from "@/lib/types";
+import type { BranchDto, CategoryDto, PagedResponse, ProductDto, StoreDto } from "@/lib/types";
 import { fmtMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/customer/portal")({
   component: () => (
     <AppShell allow={["ROLE_CUSTOMER"]}>
-      <CustomerStorefront />
+      <Shop />
     </AppShell>
   ),
 });
 
-function CustomerStorefront() {
-  const { storeId, user } = useAuthStore();
+function Shop() {
   const [products, setProducts] = useState<ProductDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [q, setQ] = useState("");
+  const [storeId, setStoreId] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [brand, setBrand] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [inStock, setInStock] = useState(false);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [direction, setDirection] = useState("DESC");
+  const [stores, setStores] = useState<StoreDto[]>([]);
+  const [branches, setBranches] = useState<BranchDto[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [brands, setBrands] = useState<string[]>([]);
+  const [favs, setFavs] = useState<Set<string>>(new Set());
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const loadMeta = async () => {
+    const [s, b, c, br] = await Promise.all([
+      api.get<PagedResponse<StoreDto>>("/api/catalog/stores", { params: { size: 100 } }),
+      api.get<PagedResponse<BranchDto>>("/api/catalog/branches", { params: { size: 100, storeId: storeId || undefined } }),
+      api.get<CategoryDto[]>("/api/catalog/categories", { params: { storeId: storeId || undefined } }),
+      api.get<string[]>("/api/catalog/brands"),
+    ]);
+    setStores(s.data.content ?? []);
+    setBranches(b.data.content ?? []);
+    setCategories(Array.isArray(c.data) ? c.data : []);
+    setBrands(br.data ?? []);
+  };
 
-  useEffect(() => {
-    let mounted = true;
-    const fetchData = async () => {
-      if (!storeId) return;
-      setLoading(true);
-      try {
-        const [prodRes, catRes] = await Promise.all([
-          api.get<ProductDto[]>(`/api/products/store/${storeId}`),
-          api.get<CategoryDto[]>(`/api/categories/store/${storeId}`),
-        ]);
-        if (mounted) {
-          setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
-          setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-        }
-      } catch (err) {
-        console.error(getApiErrorMessage(err));
-      } finally {
-        if (mounted) setLoading(false);
+  const load = async (p = 0) => {
+    try {
+      const res = await api.get<PagedResponse<ProductDto>>("/api/catalog/products", {
+        params: {
+          page: p, size: 12, q: q || undefined, storeId: storeId || undefined, branchId: branchId || undefined,
+          categoryId: categoryId || undefined, brand: brand || undefined,
+          minPrice: minPrice || undefined, maxPrice: maxPrice || undefined,
+          inStock: inStock || undefined, sortBy, direction,
+        },
+      });
+      setProducts(res.data.content ?? []);
+      setTotalPages(res.data.totalPages ?? 0);
+      setPage(p);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e));
+    }
+  };
+
+  useEffect(() => { loadMeta(); load(0); }, []);
+  useEffect(() => { loadMeta(); }, [storeId]);
+
+  const addCart = async (id?: string) => {
+    if (!id) return;
+    try {
+      await api.post("/api/shop/cart", { productId: id, quantity: 1, branchId: branchId || undefined });
+      toast.success("Added to cart");
+    } catch (e) { toast.error(getApiErrorMessage(e)); }
+  };
+  const toggleFav = async (id?: string) => {
+    if (!id) return;
+    try {
+      if (favs.has(id)) {
+        await api.delete(`/api/shop/favorites/${id}`);
+        setFavs((s) => { const n = new Set(s); n.delete(id); return n; });
+      } else {
+        await api.post(`/api/shop/favorites/${id}`);
+        setFavs((s) => new Set(s).add(id));
       }
-    };
-
-    fetchData();
-    return () => {
-      mounted = false;
-    };
-  }, [storeId]);
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCat =
-        activeCategory === "All" ||
-        p.category?.id === activeCategory ||
-        p.categoryId === activeCategory;
-
-      return matchesSearch && matchesCat;
-    });
-  }, [products, searchQuery, activeCategory]);
+    } catch (e) { toast.error(getApiErrorMessage(e)); }
+  };
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-primary/5 py-12 px-6 sm:py-20 lg:px-12 border-b">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-5 mix-blend-overlay"></div>
-        <div className="relative mx-auto max-w-5xl text-center">
-          <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-foreground">
-            Welcome, {user?.firstName || "Guest"}
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Browse our latest collection and discover premium products curated just for you.
-          </p>
-          <div className="mx-auto mt-8 flex max-w-md items-center relative shadow-sm">
-            <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="What are you looking for?"
-              className="h-14 w-full rounded-full bg-background pl-12 pr-4 text-base shadow-sm focus-visible:ring-primary/50"
-            />
-          </div>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Marketplace</h1>
+          <p className="text-sm text-muted-foreground">All products, stores, and branches. Filter and sort any way you like.</p>
         </div>
+        <Button asChild variant="outline"><Link to="/customer/cart">Cart</Link></Button>
       </div>
-
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col lg:flex-row p-6 lg:p-8 gap-8">
-        {/* Sidebar Filters */}
-        <aside className="w-full lg:w-64 shrink-0">
-          <div className="sticky top-6">
-            <div className="flex items-center gap-2 mb-4 font-display text-lg font-bold">
-              <Filter className="size-5 text-primary" />
-              Categories
+      <div className="mt-4 grid gap-3 md:grid-cols-4 lg:grid-cols-6">
+        <div className="relative md:col-span-2">
+          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search name, brand, SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={storeId} onChange={(e) => setStoreId(e.target.value)}>
+          <option value="">All stores</option>
+          {stores.map((s) => <option key={s.id} value={s.id}>{s.brand}</option>)}
+        </select>
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+          <option value="">All branches</option>
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+          <option value="">All categories</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={brand} onChange={(e) => setBrand(e.target.value)}>
+          <option value="">All brands</option>
+          {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <Input placeholder="Min price" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
+        <Input placeholder="Max price" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="createdAt">Newest</option>
+          <option value="name">Name</option>
+          <option value="sellingPrice">Price</option>
+          <option value="brand">Brand</option>
+          <option value="mrp">MRP</option>
+          <option value="sku">SKU</option>
+        </select>
+        <select className="rounded-lg border bg-background px-2 py-2 text-sm" value={direction} onChange={(e) => setDirection(e.target.value)}>
+          <option value="DESC">Descending</option>
+          <option value="ASC">Ascending</option>
+        </select>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} /> In stock</label>
+        <Button onClick={() => load(0)}>Apply filters</Button>
+      </div>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {products.map((p) => (
+          <article key={p.id} className="overflow-hidden rounded-xl border bg-card">
+            <div className="h-36 bg-muted">
+              {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : null}
             </div>
-            <div className="flex flex-col space-y-1">
-              <button
-                onClick={() => setActiveCategory("All")}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-                  activeCategory === "All"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted",
-                )}
-              >
-                All Products
-                <span className="text-xs opacity-60 bg-background px-2 py-0.5 rounded-full">
-                  {products.length}
-                </span>
-              </button>
-              {categories.map((cat) => {
-                const count = products.filter(
-                  (p) => p.category?.id === cat.id || p.categoryId === cat.id,
-                ).length;
-                if (count === 0) return null; // hide empty categories
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id!)}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-                      activeCategory === cat.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted",
-                    )}
-                  >
-                    {cat.name}
-                    <span className="text-xs opacity-60 bg-muted px-2 py-0.5 rounded-full">
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </aside>
-
-        {/* Product Grid */}
-        <main className="flex-1">
-          {loading ? (
-            <div className="flex h-64 items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed bg-muted/30 text-center">
-              <ShoppingBag className="mb-4 size-12 text-muted-foreground/30" />
-              <h3 className="font-display text-xl font-bold">No products found</h3>
-              <p className="mt-2 text-muted-foreground max-w-md">
-                We couldn't find any products matching your search criteria. Try removing some
-                filters.
-              </p>
-              <Button
-                variant="outline"
-                className="mt-6"
-                onClick={() => {
-                  setSearchQuery("");
-                  setActiveCategory("All");
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-display text-2xl font-bold">
-                  {activeCategory === "All"
-                    ? "All Products"
-                    : categories.find((c) => c.id === activeCategory)?.name}
-                </h2>
-                <span className="text-sm text-muted-foreground">
-                  Showing {filteredProducts.length} items
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map((p) => (
-                  <div
-                    key={p.id}
-                    className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30"
-                  >
-                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted/50">
-                      {p.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.image}
-                          alt={p.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <ImageIcon className="size-12 text-muted-foreground/20" />
-                        </div>
-                      )}
-
-                      {/* Overlay for quick actions */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-center justify-center">
-                        <Button className="rounded-full shadow-lg" variant="secondary">
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 flex-col p-5">
-                      {p.brand && (
-                        <p className="text-xs font-semibold uppercase tracking-wider text-primary/80 mb-1">
-                          {p.brand}
-                        </p>
-                      )}
-                      <h3 className="font-display text-lg font-bold leading-tight mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                        {p.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-                        {p.description || "No description available."}
-                      </p>
-                      <div className="flex items-end justify-between mt-auto">
-                        <div>
-                          {p.mrp && p.mrp > p.sellingPrice && (
-                            <span className="text-xs text-muted-foreground line-through mr-2">
-                              {fmtMoney(p.mrp)}
-                            </span>
-                          )}
-                          <span className="font-display text-xl font-extrabold text-foreground">
-                            {fmtMoney(p.sellingPrice)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="p-3">
+              <p className="text-xs text-muted-foreground">{p.storeBrand} · {p.categoryName ?? "General"}</p>
+              <h3 className="font-semibold">{p.name}</h3>
+              <p className="text-sm text-[#0D7377]">{fmtMoney(p.sellingPrice)}</p>
+              <p className="text-xs text-muted-foreground">Stock {p.stockQuantity ?? 0} · {p.brand}</p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" onClick={() => addCart(p.id)}><ShoppingCart className="size-3" /> Cart</Button>
+                <Button size="sm" variant="outline" onClick={() => toggleFav(p.id)}><Heart className="size-3" /></Button>
               </div>
             </div>
-          )}
-        </main>
+          </article>
+        ))}
+      </div>
+      <div className="mt-6 flex gap-2">
+        <Button variant="outline" disabled={page === 0} onClick={() => load(page - 1)}>Previous</Button>
+        <Button variant="outline" disabled={page + 1 >= totalPages} onClick={() => load(page + 1)}>Next</Button>
       </div>
     </div>
   );

@@ -200,11 +200,22 @@
   animation: landing-shimmer 8s linear infinite;
 }
 
+@keyframes landing-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.landing-marquee {
+  display: inline-block;
+  min-width: 200%;
+  animation: landing-marquee 18s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-float,
   .landing-fade-up,
   .landing-pulse-ring,
-  .landing-hero-glow {
+  .landing-hero-glow,
+  .landing-marquee {
     animation: none;
   }
 }

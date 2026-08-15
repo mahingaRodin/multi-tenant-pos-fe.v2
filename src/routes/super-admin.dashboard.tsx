@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { StoreDto, PagedResponse, BranchDto, OrderDto } from "@/lib/types";
+import type { StoreDto, PagedResponse, BranchDto, OrderDto, AdminNotification } from "@/lib/types";
 import { normalizeStoreStatus } from "@/lib/types";
 import { Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
@@ -32,10 +32,14 @@ function DashboardHome() {
   const [branchCountByStore, setBranchCountByStore] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [ticker, setTicker] = useState<AdminNotification[]>([]);
 
   const fetchData = async (silent = false) => {
     if (silent) setRefreshing(true); else setLoading(true);
     try {
+      api.get<{ items: AdminNotification[] }>("/api/admin/notifications/ticker")
+        .then((r) => setTicker(r.data.items ?? []))
+        .catch(() => undefined);
       // 1. Fetch all stores — vary size to bust Spring Pageable cache key
       const bustSize = 100 + (Date.now() % 4);
       const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
@@ -170,6 +174,14 @@ function DashboardHome() {
           </button>
         </div>
       </div>
+
+      {ticker.length > 0 && (
+        <div className="mb-6 overflow-hidden rounded-lg border border-[#14B8A6]/40 bg-[#14B8A6]/10 py-2">
+          <div className="landing-marquee px-4 text-sm font-medium text-foreground">
+            {ticker.map((t) => t.title).join("   •   ")}   •   {ticker.map((t) => t.title).join("   •   ")}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex h-60 items-center justify-center">

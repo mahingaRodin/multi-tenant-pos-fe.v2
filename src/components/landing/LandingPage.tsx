@@ -24,6 +24,7 @@ import {
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 const NAV = [
   { href: "#product", label: "Product" },
@@ -186,11 +187,15 @@ export function LandingPage() {
             ))}
           </nav>
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             <Button variant="ghost" asChild>
               <Link to="/login">Sign in</Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link to="/apply-store">For stores</Link>
+            </Button>
             <Button className="bg-[#14B8A6] text-[#0F172A] hover:bg-[#14B8A6]/90" asChild>
-              <Link to="/signup">Get started</Link>
+              <Link to="/signup">Shop with us</Link>
             </Button>
           </div>
           <button
@@ -201,6 +206,9 @@ export function LandingPage() {
           >
             {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
+          <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle />
+          </div>
         </div>
         {menuOpen && (
           <div className="border-t bg-background px-4 py-4 md:hidden">
@@ -247,15 +255,15 @@ export function LandingPage() {
               Store teams manage products and people. Cashiers sell with a fast terminal. Customers can
               shop the same catalog online.
             </p>
-            <div className="landing-fade-up landing-delay-3 mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="landing-fade-up landing-delay-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button size="lg" className="bg-[#14B8A6] text-[#0F172A] hover:bg-[#14B8A6]/90" asChild>
                 <Link to="/signup">
-                  Create a workspace
+                  Create a shopper account
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/login">Open the POS</Link>
+                <Link to="/apply-store">Do you have a store and want to boost your productivity?</Link>
               </Button>
             </div>
             <p className="landing-fade-up landing-delay-4 mt-4 text-xs text-muted-foreground">

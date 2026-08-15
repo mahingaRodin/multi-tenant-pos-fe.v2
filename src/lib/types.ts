@@ -11,7 +11,7 @@ export type PaymentType = "CASH" | "UPI" | "CARD";
 
 export type EOrderStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
 
-export type EUserStatus = "ACTIVE" | "SUSPENDED" | "DISCHARGED";
+export type EUserStatus = "ACTIVE" | "SUSPENDED" | "DISCHARGED" | "PENDING";
 
 export interface UserDto {
   id?: string;
@@ -24,6 +24,8 @@ export interface UserDto {
   password?: string;
   branchId?: string;
   storeId?: string;
+  emailVerified?: boolean;
+  profilePicture?: string;
   createdAt?: string;
   updatedAt?: string;
   lastLogin?: string;
@@ -92,6 +94,11 @@ export interface ProductDto {
   category?: CategoryDto;
   categoryId?: string;
   storeId?: string;
+  storeName?: string;
+  storeBrand?: string;
+  categoryName?: string;
+  stockQuantity?: number;
+  favorite?: boolean;
 }
 
 export interface CustomerDto {
@@ -180,4 +187,35 @@ export interface RefundDto {
   branchId?: string;
   paymentType: PaymentType;
   createdAt?: string;
+}
+
+export type ERegistrationStatus = "PENDING" | "UNDER_REVIEW" | "MORE_INFO" | "APPROVED" | "REJECTED";
+
+export interface TenantRegistrationDto {
+  id: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPhone?: string;
+  businessName: string;
+  legalName?: string;
+  registrationNumber?: string;
+  country?: string;
+  industry?: string;
+  businessDescription?: string;
+  status: ERegistrationStatus;
+  adminNotes?: string;
+  rejectionReason?: string;
+  moreInfoMessage?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  title: string;
+  body: string;
+  registrationId?: string;
+  read: boolean;
+  createdAt: string;
 }

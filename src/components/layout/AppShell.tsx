@@ -16,11 +16,12 @@ import {
   ScrollText,
   UserCircle,
   LogOut,
-  Moon,
-  Sun,
   Menu,
   Settings,
   HelpCircle,
+  Heart,
+  ShoppingCart,
+  Briefcase,
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -29,6 +30,7 @@ import { useUIStore } from "@/stores/uiStore";
 import type { Role } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 interface NavItem {
   to: string;
@@ -40,10 +42,12 @@ const NAV: Record<Role, NavItem[]> = {
   ROLE_SUPER_ADMIN: [
     { to: "/super-admin/dashboard", label: "Dashboard",  icon: LayoutDashboard },
     { to: "/super-admin/stores",    label: "Stores",     icon: Store },
+    { to: "/super-admin/businesses", label: "Businesses", icon: Briefcase },
     { to: "/super-admin/orders",    label: "Orders",     icon: Receipt },
     { to: "/super-admin/users",     label: "Users",      icon: Users },
     { to: "/super-admin/analytics", label: "Analytics",  icon: BarChart3 },
     { to: "/super-admin/settings",  label: "Settings",   icon: Settings },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_STORE_ADMIN: [
     { to: "/store/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -52,6 +56,7 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/store/categories", label: "Categories", icon: Tags },
     { to: "/store/employees", label: "Employees", icon: Users },
     { to: "/store/analytics", label: "Analytics", icon: BarChart3 },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_STORE_MANAGER: [
     { to: "/store/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -60,6 +65,7 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/store/categories", label: "Categories", icon: Tags },
     { to: "/store/employees", label: "Employees", icon: Users },
     { to: "/store/analytics", label: "Analytics", icon: BarChart3 },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_BRANCH_MANAGER: [
     { to: "/branch/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -67,16 +73,20 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/branch/employees", label: "Employees", icon: Users },
     { to: "/branch/shifts", label: "Shifts", icon: ClipboardList },
     { to: "/branch/orders", label: "Orders", icon: Receipt },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_BRANCH_CASHIER: [
     { to: "/pos", label: "POS Terminal", icon: ShoppingBag },
     { to: "/pos/shift", label: "Shift Report", icon: ScrollText },
     { to: "/pos/refunds", label: "Refunds", icon: RotateCcw },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_CUSTOMER: [
     { to: "/customer/portal", label: "Shop", icon: ShoppingBag },
+    { to: "/customer/favorites", label: "Favorites", icon: Heart },
+    { to: "/customer/cart", label: "Cart", icon: ShoppingCart },
     { to: "/customer/orders", label: "My Orders", icon: Receipt },
-    { to: "/customer/profile", label: "Profile", icon: UserCircle },
+    { to: "/profile", label: "Profile", icon: UserCircle },
   ],
 };
 
@@ -87,7 +97,7 @@ interface AppShellProps {
 
 export function AppShell({ allow, children }: AppShellProps) {
   const { token, role, user, logout } = useAuthStore();
-  const { sidebarOpen, toggleSidebar, theme, toggleTheme } = useUIStore();
+  const { sidebarOpen, toggleSidebar } = useUIStore();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -241,13 +251,17 @@ export function AppShell({ allow, children }: AppShellProps) {
               </svg>
             </button>
             {/* Theme toggle */}
-            <button onClick={toggleTheme} className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors">
-              {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-            </button>
-            {/* User Avatar */}
-            <div className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-xs font-bold cursor-pointer ml-1">
-              {userInitials}
-            </div>
+            <ThemeToggle />
+            <Link
+              to="/profile"
+              className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-xs font-bold ml-1 overflow-hidden"
+            >
+              {user?.profilePicture ? (
+                <img src={user.profilePicture} alt="" className="size-full object-cover" />
+              ) : (
+                userInitials
+              )}
+            </Link>
           </div>
         </header>
 

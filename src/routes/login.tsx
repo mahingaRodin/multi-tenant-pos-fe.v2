@@ -9,6 +9,7 @@ import { Loader2, Zap, Shield, BarChart2, ArrowRight } from "lucide-react";
 
 import { api, getApiErrorMessage } from "@/lib/api";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import type { AuthResponse } from "@/lib/types";
 
@@ -103,7 +104,8 @@ function LoginPage() {
       </div>
 
       {/* Right Panel — White */}
-      <div className="flex flex-1 items-center justify-center p-8 bg-background">
+      <div className="flex flex-1 items-center justify-center p-8 bg-background relative">
+        <div className="absolute right-4 top-4"><ThemeToggle /></div>
         <div className="w-full max-w-sm">
           <h1 className="text-3xl font-bold text-foreground mb-1 font-display">
             Welcome back

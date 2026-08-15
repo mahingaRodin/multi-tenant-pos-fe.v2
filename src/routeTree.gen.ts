@@ -9,8 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ApplyStoreRouteImport } from './routes/apply-store'
+import { Route as ActivateRouteImport } from './routes/activate'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PosIndexRouteImport } from './routes/pos.index'
 import { Route as SuperAdminUsersRouteImport } from './routes/super-admin.users'
@@ -18,6 +22,7 @@ import { Route as SuperAdminStoresRouteImport } from './routes/super-admin.store
 import { Route as SuperAdminSettingsRouteImport } from './routes/super-admin.settings'
 import { Route as SuperAdminOrdersRouteImport } from './routes/super-admin.orders'
 import { Route as SuperAdminDashboardRouteImport } from './routes/super-admin.dashboard'
+import { Route as SuperAdminBusinessesRouteImport } from './routes/super-admin.businesses'
 import { Route as SuperAdminAnalyticsRouteImport } from './routes/super-admin.analytics'
 import { Route as StoreProductsRouteImport } from './routes/store.products'
 import { Route as StoreEmployeesRouteImport } from './routes/store.employees'
@@ -28,18 +33,42 @@ import { Route as PosShiftRouteImport } from './routes/pos.shift'
 import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
 import { Route as CustomerPortalRouteImport } from './routes/customer.portal'
 import { Route as CustomerOrdersRouteImport } from './routes/customer.orders'
+import { Route as CustomerFavoritesRouteImport } from './routes/customer.favorites'
+import { Route as CustomerCartRouteImport } from './routes/customer.cart'
+import { Route as BranchShiftsRouteImport } from './routes/branch.shifts'
 import { Route as BranchOrdersRouteImport } from './routes/branch.orders'
 import { Route as BranchInventoryRouteImport } from './routes/branch.inventory'
+import { Route as BranchEmployeesRouteImport } from './routes/branch.employees'
 import { Route as BranchDashboardRouteImport } from './routes/branch.dashboard'
 
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyStoreRoute = ApplyStoreRouteImport.update({
+  id: '/apply-store',
+  path: '/apply-store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateRoute = ActivateRouteImport.update({
+  id: '/activate',
+  path: '/activate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -75,6 +104,11 @@ const SuperAdminOrdersRoute = SuperAdminOrdersRouteImport.update({
 const SuperAdminDashboardRoute = SuperAdminDashboardRouteImport.update({
   id: '/super-admin/dashboard',
   path: '/super-admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperAdminBusinessesRoute = SuperAdminBusinessesRouteImport.update({
+  id: '/super-admin/businesses',
+  path: '/super-admin/businesses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuperAdminAnalyticsRoute = SuperAdminAnalyticsRouteImport.update({
@@ -127,6 +161,21 @@ const CustomerOrdersRoute = CustomerOrdersRouteImport.update({
   path: '/customer/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerFavoritesRoute = CustomerFavoritesRouteImport.update({
+  id: '/customer/favorites',
+  path: '/customer/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerCartRoute = CustomerCartRouteImport.update({
+  id: '/customer/cart',
+  path: '/customer/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchShiftsRoute = BranchShiftsRouteImport.update({
+  id: '/branch/shifts',
+  path: '/branch/shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BranchOrdersRoute = BranchOrdersRouteImport.update({
   id: '/branch/orders',
   path: '/branch/orders',
@@ -137,6 +186,11 @@ const BranchInventoryRoute = BranchInventoryRouteImport.update({
   path: '/branch/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BranchEmployeesRoute = BranchEmployeesRouteImport.update({
+  id: '/branch/employees',
+  path: '/branch/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BranchDashboardRoute = BranchDashboardRouteImport.update({
   id: '/branch/dashboard',
   path: '/branch/dashboard',
@@ -145,11 +199,19 @@ const BranchDashboardRoute = BranchDashboardRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activate': typeof ActivateRoute
+  '/apply-store': typeof ApplyStoreRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
   '/branch/orders': typeof BranchOrdersRoute
+  '/branch/shifts': typeof BranchShiftsRoute
+  '/customer/cart': typeof CustomerCartRoute
+  '/customer/favorites': typeof CustomerFavoritesRoute
   '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
@@ -160,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/store/employees': typeof StoreEmployeesRoute
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
+  '/super-admin/businesses': typeof SuperAdminBusinessesRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
   '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
@@ -169,11 +232,19 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activate': typeof ActivateRoute
+  '/apply-store': typeof ApplyStoreRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
   '/branch/orders': typeof BranchOrdersRoute
+  '/branch/shifts': typeof BranchShiftsRoute
+  '/customer/cart': typeof CustomerCartRoute
+  '/customer/favorites': typeof CustomerFavoritesRoute
   '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
@@ -184,6 +255,7 @@ export interface FileRoutesByTo {
   '/store/employees': typeof StoreEmployeesRoute
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
+  '/super-admin/businesses': typeof SuperAdminBusinessesRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
   '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
@@ -194,11 +266,19 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activate': typeof ActivateRoute
+  '/apply-store': typeof ApplyStoreRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/branch/dashboard': typeof BranchDashboardRoute
+  '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
   '/branch/orders': typeof BranchOrdersRoute
+  '/branch/shifts': typeof BranchShiftsRoute
+  '/customer/cart': typeof CustomerCartRoute
+  '/customer/favorites': typeof CustomerFavoritesRoute
   '/customer/orders': typeof CustomerOrdersRoute
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
@@ -209,6 +289,7 @@ export interface FileRoutesById {
   '/store/employees': typeof StoreEmployeesRoute
   '/store/products': typeof StoreProductsRoute
   '/super-admin/analytics': typeof SuperAdminAnalyticsRoute
+  '/super-admin/businesses': typeof SuperAdminBusinessesRoute
   '/super-admin/dashboard': typeof SuperAdminDashboardRoute
   '/super-admin/orders': typeof SuperAdminOrdersRoute
   '/super-admin/settings': typeof SuperAdminSettingsRoute
@@ -220,11 +301,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activate'
+    | '/apply-store'
     | '/login'
+    | '/profile'
     | '/signup'
+    | '/verify-otp'
     | '/branch/dashboard'
+    | '/branch/employees'
     | '/branch/inventory'
     | '/branch/orders'
+    | '/branch/shifts'
+    | '/customer/cart'
+    | '/customer/favorites'
     | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
@@ -235,6 +324,7 @@ export interface FileRouteTypes {
     | '/store/employees'
     | '/store/products'
     | '/super-admin/analytics'
+    | '/super-admin/businesses'
     | '/super-admin/dashboard'
     | '/super-admin/orders'
     | '/super-admin/settings'
@@ -244,11 +334,19 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activate'
+    | '/apply-store'
     | '/login'
+    | '/profile'
     | '/signup'
+    | '/verify-otp'
     | '/branch/dashboard'
+    | '/branch/employees'
     | '/branch/inventory'
     | '/branch/orders'
+    | '/branch/shifts'
+    | '/customer/cart'
+    | '/customer/favorites'
     | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
@@ -259,6 +357,7 @@ export interface FileRouteTypes {
     | '/store/employees'
     | '/store/products'
     | '/super-admin/analytics'
+    | '/super-admin/businesses'
     | '/super-admin/dashboard'
     | '/super-admin/orders'
     | '/super-admin/settings'
@@ -268,11 +367,19 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activate'
+    | '/apply-store'
     | '/login'
+    | '/profile'
     | '/signup'
+    | '/verify-otp'
     | '/branch/dashboard'
+    | '/branch/employees'
     | '/branch/inventory'
     | '/branch/orders'
+    | '/branch/shifts'
+    | '/customer/cart'
+    | '/customer/favorites'
     | '/customer/orders'
     | '/customer/portal'
     | '/pos/refunds'
@@ -283,6 +390,7 @@ export interface FileRouteTypes {
     | '/store/employees'
     | '/store/products'
     | '/super-admin/analytics'
+    | '/super-admin/businesses'
     | '/super-admin/dashboard'
     | '/super-admin/orders'
     | '/super-admin/settings'
@@ -293,11 +401,19 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivateRoute: typeof ActivateRoute
+  ApplyStoreRoute: typeof ApplyStoreRoute
   LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
   SignupRoute: typeof SignupRoute
+  VerifyOtpRoute: typeof VerifyOtpRoute
   BranchDashboardRoute: typeof BranchDashboardRoute
+  BranchEmployeesRoute: typeof BranchEmployeesRoute
   BranchInventoryRoute: typeof BranchInventoryRoute
   BranchOrdersRoute: typeof BranchOrdersRoute
+  BranchShiftsRoute: typeof BranchShiftsRoute
+  CustomerCartRoute: typeof CustomerCartRoute
+  CustomerFavoritesRoute: typeof CustomerFavoritesRoute
   CustomerOrdersRoute: typeof CustomerOrdersRoute
   CustomerPortalRoute: typeof CustomerPortalRoute
   PosRefundsRoute: typeof PosRefundsRoute
@@ -308,6 +424,7 @@ export interface RootRouteChildren {
   StoreEmployeesRoute: typeof StoreEmployeesRoute
   StoreProductsRoute: typeof StoreProductsRoute
   SuperAdminAnalyticsRoute: typeof SuperAdminAnalyticsRoute
+  SuperAdminBusinessesRoute: typeof SuperAdminBusinessesRoute
   SuperAdminDashboardRoute: typeof SuperAdminDashboardRoute
   SuperAdminOrdersRoute: typeof SuperAdminOrdersRoute
   SuperAdminSettingsRoute: typeof SuperAdminSettingsRoute
@@ -318,6 +435,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -325,11 +449,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply-store': {
+      id: '/apply-store'
+      path: '/apply-store'
+      fullPath: '/apply-store'
+      preLoaderRoute: typeof ApplyStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate': {
+      id: '/activate'
+      path: '/activate'
+      fullPath: '/activate'
+      preLoaderRoute: typeof ActivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -379,6 +524,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/dashboard'
       fullPath: '/super-admin/dashboard'
       preLoaderRoute: typeof SuperAdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/super-admin/businesses': {
+      id: '/super-admin/businesses'
+      path: '/super-admin/businesses'
+      fullPath: '/super-admin/businesses'
+      preLoaderRoute: typeof SuperAdminBusinessesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/super-admin/analytics': {
@@ -451,6 +603,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customer/favorites': {
+      id: '/customer/favorites'
+      path: '/customer/favorites'
+      fullPath: '/customer/favorites'
+      preLoaderRoute: typeof CustomerFavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer/cart': {
+      id: '/customer/cart'
+      path: '/customer/cart'
+      fullPath: '/customer/cart'
+      preLoaderRoute: typeof CustomerCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branch/shifts': {
+      id: '/branch/shifts'
+      path: '/branch/shifts'
+      fullPath: '/branch/shifts'
+      preLoaderRoute: typeof BranchShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/branch/orders': {
       id: '/branch/orders'
       path: '/branch/orders'
@@ -465,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BranchInventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/branch/employees': {
+      id: '/branch/employees'
+      path: '/branch/employees'
+      fullPath: '/branch/employees'
+      preLoaderRoute: typeof BranchEmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/branch/dashboard': {
       id: '/branch/dashboard'
       path: '/branch/dashboard'
@@ -477,11 +657,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivateRoute: ActivateRoute,
+  ApplyStoreRoute: ApplyStoreRoute,
   LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
   SignupRoute: SignupRoute,
+  VerifyOtpRoute: VerifyOtpRoute,
   BranchDashboardRoute: BranchDashboardRoute,
+  BranchEmployeesRoute: BranchEmployeesRoute,
   BranchInventoryRoute: BranchInventoryRoute,
   BranchOrdersRoute: BranchOrdersRoute,
+  BranchShiftsRoute: BranchShiftsRoute,
+  CustomerCartRoute: CustomerCartRoute,
+  CustomerFavoritesRoute: CustomerFavoritesRoute,
   CustomerOrdersRoute: CustomerOrdersRoute,
   CustomerPortalRoute: CustomerPortalRoute,
   PosRefundsRoute: PosRefundsRoute,
@@ -492,6 +680,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreEmployeesRoute: StoreEmployeesRoute,
   StoreProductsRoute: StoreProductsRoute,
   SuperAdminAnalyticsRoute: SuperAdminAnalyticsRoute,
+  SuperAdminBusinessesRoute: SuperAdminBusinessesRoute,
   SuperAdminDashboardRoute: SuperAdminDashboardRoute,
   SuperAdminOrdersRoute: SuperAdminOrdersRoute,
   SuperAdminSettingsRoute: SuperAdminSettingsRoute,
