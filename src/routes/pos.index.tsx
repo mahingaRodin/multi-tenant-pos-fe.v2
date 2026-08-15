@@ -281,9 +281,9 @@ function PosTerminal() {
   }, [products, activeCategory]);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Shift bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-3 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           {currentShift ? (
             <>
@@ -317,7 +317,7 @@ function PosTerminal() {
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[1fr_420px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[1fr_min(420px,40vw)] lg:overflow-hidden">
         {/* LEFT: products */}
         <div className="flex flex-col overflow-hidden border-r">
           <div className="border-b bg-card p-4">

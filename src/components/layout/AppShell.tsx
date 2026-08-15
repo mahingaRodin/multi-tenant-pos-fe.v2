@@ -22,15 +22,19 @@ import {
   Heart,
   ShoppingCart,
   Briefcase,
+  Loader2,
+  X,
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
-import type { Role } from "@/lib/types";
+import type { Role, StoreDto, UserDto } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { api } from "@/lib/api";
 
 interface NavItem {
   to: string;
@@ -97,16 +101,57 @@ interface AppShellProps {
 }
 
 export function AppShell({ allow, children }: AppShellProps) {
-  const { token, role, user, logout } = useAuthStore();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { token, role, user, logout, hasHydrated, patchUser, storeId } = useAuthStore();
+  const { sidebarOpen, toggleSidebar, setSidebar } = useUIStore();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (!token) navigate({ to: "/login" });
-  }, [token, navigate]);
+    if (isMobile) setSidebar(false);
+  }, [isMobile, setSidebar]);
 
-  if (!token || !role) return null;
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!token) navigate({ to: "/login" });
+  }, [token, navigate, hasHydrated]);
+
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await api.get<UserDto>("/api/profile/me");
+        if (cancelled) return;
+        patchUser(me.data);
+        const nextStoreId = me.data.storeId ?? storeId;
+        if (
+          !nextStoreId &&
+          (me.data.role === "ROLE_STORE_ADMIN" || me.data.role === "ROLE_STORE_MANAGER")
+        ) {
+          try {
+            const store = await api.get<StoreDto>("/api/stores/admin");
+            if (!cancelled && store.data?.id) patchUser({ storeId: store.data.id });
+          } catch {
+            /* owner may not have created a store yet */
+          }
+        }
+      } catch {
+        /* keep persisted session */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasHydrated, token]);
+
+  if (!hasHydrated || !token || !role) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (allow && !allow.includes(role)) {
     return (
@@ -133,19 +178,36 @@ export function AppShell({ allow, children }: AppShellProps) {
     user?.email?.[0]?.toUpperCase() ||
     "U";
 
+  const collapsed = !isMobile && !sidebarOpen;
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
+      {isMobile && sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebar(false)}
+        />
+      )}
       <aside
         className={cn(
-          "sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden",
-          sidebarOpen ? "w-[220px]" : "w-16",
+          "flex h-screen shrink-0 flex-col overflow-hidden transition-[transform,width] duration-200",
+          isMobile
+            ? cn(
+                "fixed inset-y-0 left-0 z-50 w-[min(220px,85vw)]",
+                sidebarOpen ? "translate-x-0" : "-translate-x-full",
+              )
+            : collapsed
+              ? "w-16"
+              : "w-[220px]",
         )}
         style={{ background: "#0F172A" }}
       >
         {/* Logo */}
-        <div className={cn("flex items-center gap-2 px-5 h-16 shrink-0", !sidebarOpen && "justify-center px-0")}>
+        <div className={cn("flex items-center gap-2 px-5 h-16 shrink-0", collapsed && "justify-center px-0")}>
           <BrandLogo to={false} wordmark={false} size="sm" />
-          {sidebarOpen && (
+          {!collapsed && (
             <div>
               <div className="text-white text-sm font-bold leading-none">POSify</div>
               <div className="text-slate-400 text-[10px] leading-none mt-0.5">{user?.firstName ? `${user.firstName}'s Branch` : roleLabel(role)}</div>
@@ -154,7 +216,7 @@ export function AppShell({ allow, children }: AppShellProps) {
         </div>
 
         {/* New Sale CTA */}
-        {showNewSale && sidebarOpen && (
+        {showNewSale && !collapsed && (
           <div className="px-4 pb-3">
             <Link
               to="/pos"
@@ -176,16 +238,19 @@ export function AppShell({ allow, children }: AppShellProps) {
                 key={item.to}
                 to={item.to}
                 title={item.label}
+                onClick={() => {
+                  if (isMobile) setSidebar(false);
+                }}
                 className={cn(
                   "flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150 border-l-4",
-                  sidebarOpen ? "px-5" : "px-0 justify-center",
+                  collapsed ? "px-0 justify-center" : "px-5",
                   active
                     ? "border-primary bg-white/5 text-white"
                     : "border-transparent text-slate-400 hover:text-white hover:bg-white/5",
                 )}
               >
                 <item.icon className="size-[18px] shrink-0" />
-                {sidebarOpen && <span className="truncate">{item.label}</span>}
+                {collapsed ? null : <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
@@ -197,35 +262,40 @@ export function AppShell({ allow, children }: AppShellProps) {
             onClick={() => navigate({ to: dashboardPathFor(role) })}
             className={cn(
               "flex items-center gap-3 w-full py-2 text-slate-400 hover:text-white transition-colors text-sm",
-              sidebarOpen ? "px-5" : "px-0 justify-center",
+              collapsed ? "px-0 justify-center" : "px-5",
             )}
             title="Help Center"
           >
             <HelpCircle className="size-4 shrink-0" />
-            {sidebarOpen && <span>Help Center</span>}
+            {!collapsed && <span>Help Center</span>}
           </button>
           <button
             onClick={() => { logout(); navigate({ to: "/login" }); }}
             className={cn(
               "flex items-center gap-3 w-full py-2 text-slate-400 hover:text-white transition-colors text-sm",
-              sidebarOpen ? "px-5" : "px-0 justify-center",
+              collapsed ? "px-0 justify-center" : "px-5",
             )}
             title="Logout"
           >
             <LogOut className="size-4 shrink-0" />
-            {sidebarOpen && <span>Logout</span>}
+            {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6 shrink-0">
-          <div className="flex items-center gap-3 flex-1">
-            <button onClick={toggleSidebar} className="text-slate-400 hover:text-slate-600 transition-colors mr-1">
-              <Menu className="size-5" />
+        <header className="flex h-14 sm:h-16 items-center justify-between border-b border-border bg-card px-3 sm:px-6 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="text-slate-400 hover:text-slate-600 transition-colors mr-1 p-1"
+              aria-label={isMobile && sidebarOpen ? "Close menu" : "Open menu"}
+            >
+              {isMobile && sidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
-            <div className="relative flex-1 max-w-md">
+            <div className="relative hidden min-w-0 flex-1 max-w-md sm:block">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -236,7 +306,7 @@ export function AppShell({ allow, children }: AppShellProps) {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 shrink-0">
             {/* Register Status badge (super admin) */}
             {role === "ROLE_SUPER_ADMIN" && (
               <button className="hidden sm:flex border border-primary text-primary text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary/5 transition-colors">
@@ -264,7 +334,7 @@ export function AppShell({ allow, children }: AppShellProps) {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-background">{children ?? <Outlet />}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-background">{children ?? <Outlet />}</main>
       </div>
     </div>
   );

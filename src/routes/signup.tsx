@@ -81,7 +81,7 @@ function SignupPage() {
           <input type="email" placeholder="Enter your email address." {...register("email")} className={fieldCls} />
           {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className={labelCls}>First name</label>
             <input placeholder="First name" {...register("firstName")} className={fieldCls} />

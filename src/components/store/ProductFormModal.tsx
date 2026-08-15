@@ -134,7 +134,7 @@ export function ProductFormModal({
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Product" : "New Product"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
             <div className="col-span-2 space-y-2">
               <Label>Product Name *</Label>
               <Input

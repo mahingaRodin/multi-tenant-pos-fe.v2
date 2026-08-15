@@ -24,6 +24,7 @@ export interface UserDto {
   password?: string;
   branchId?: string;
   storeId?: string;
+  tenantId?: string;
   emailVerified?: boolean;
   profilePicture?: string;
   createdAt?: string;

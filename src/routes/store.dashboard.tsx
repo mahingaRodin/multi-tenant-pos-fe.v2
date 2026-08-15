@@ -24,7 +24,10 @@ function StoreDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId) {
+      setLoading(false);
+      return;
+    }
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -46,7 +49,7 @@ function StoreDashboard() {
   const branches = (data?.byBranch ?? []).map((b) => ({ name: b.name, sales: b.value }));
 
   return (
-    <div className="flex h-full flex-col bg-muted/20 p-6">
+    <div className="flex h-full flex-col bg-muted/20 p-4 sm:p-6">
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold">Store Overview</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -56,6 +59,13 @@ function StoreDashboard() {
       {loading ? (
         <div className="flex h-60 items-center justify-center">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : !storeId ? (
+        <div className="rounded-xl border bg-card p-8 text-center">
+          <h2 className="font-display text-lg font-semibold">No store linked yet</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Create a store to see live sales, products, and branches for this account.
+          </p>
         </div>
       ) : (
         <>

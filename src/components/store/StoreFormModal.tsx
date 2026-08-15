@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 import type { StoreDto } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +88,10 @@ export function StoreFormModal({
         await api.put(`/api/stores/${storeToEdit.id}/update`, payload);
         toast.success("Store updated successfully");
       } else {
-        await api.post("/api/stores", payload);
+        const created = await api.post<StoreDto>("/api/stores", payload);
+        if (created.data?.id) {
+          useAuthStore.getState().patchUser({ storeId: created.data.id });
+        }
         toast.success("Store created successfully");
       }
       onSuccess();
@@ -106,7 +110,7 @@ export function StoreFormModal({
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Store" : "New Store"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
             <div className="col-span-2 space-y-2">
               <Label>Brand Name *</Label>
               <Input
