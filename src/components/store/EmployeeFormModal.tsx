@@ -92,10 +92,6 @@ export function EmployeeFormModal({
       toast.error("First name, last name, email, and role are required");
       return;
     }
-    if (!isEditing && !password.trim()) {
-      toast.error("Password is required for new employees");
-      return;
-    }
 
     setSubmitting(true);
     try {
@@ -195,7 +191,7 @@ export function EmployeeFormModal({
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Set a secure password"
+                  placeholder="Leave blank to email an activation link"
                 />
               </div>
             )}
