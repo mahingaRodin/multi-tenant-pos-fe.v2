@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, ArrowRight, Mail, Lock, RotateCcw } from "lucide-react";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import type { AuthResponse, Role } from "@/lib/types";
 
@@ -85,12 +86,7 @@ function SignupPage() {
         className="hidden lg:flex lg:w-[400px] xl:w-[420px] shrink-0 flex-col p-10 relative overflow-hidden"
         style={{ background: "#0B1120" }}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-[#14B8A6] flex items-center justify-center">
-            <span className="text-white text-sm font-bold">P</span>
-          </div>
-          <span className="text-white text-lg font-bold tracking-tight font-display">POSify</span>
-        </div>
+        <BrandLogo inverted size="md" />
 
         <div className="absolute inset-0 opacity-5 pointer-events-none"
           style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,.1) 40px,rgba(255,255,255,.1) 41px)" }}

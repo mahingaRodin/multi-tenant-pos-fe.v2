@@ -23,6 +23,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import type { Role } from "@/lib/types";
@@ -133,9 +134,7 @@ export function AppShell({ allow, children }: AppShellProps) {
       >
         {/* Logo */}
         <div className={cn("flex items-center gap-2 px-5 h-16 shrink-0", !sidebarOpen && "justify-center px-0")}>
-          <div className="w-8 h-8 rounded bg-[#14B8A6] flex items-center justify-center shrink-0">
-            <ShoppingBag className="size-4 text-white" />
-          </div>
+          <BrandLogo to={false} wordmark={false} size="sm" />
           {sidebarOpen && (
             <div>
               <div className="text-white text-sm font-bold leading-none" style={{ fontFamily: "Syne, sans-serif" }}>POSify</div>

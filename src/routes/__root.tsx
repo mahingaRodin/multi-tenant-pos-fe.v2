@@ -39,10 +39,20 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "POSify — Enterprise POS" },
-      { name: "description", content: "Industrial-grade multi-tenant point-of-sale platform." },
+      { title: "POSify — Multi-tenant POS for retailers" },
+      {
+        name: "description",
+        content:
+          "POSify is a multi-tenant point-of-sale platform for stores, branches, cashiers, and customers — checkout, inventory, shifts, and analytics.",
+      },
+      { name: "theme-color", content: "#0F172A" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/logo.png", type: "image/png", sizes: "512x512" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "shortcut icon", href: "/logo.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
@@ -63,7 +73,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <head>
         <HeadContent />
       </head>

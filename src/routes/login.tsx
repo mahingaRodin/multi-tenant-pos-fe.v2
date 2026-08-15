@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Zap, Shield, BarChart2, ArrowRight } from "lucide-react";
 
 import { api, getApiErrorMessage } from "@/lib/api";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import type { AuthResponse } from "@/lib/types";
 
@@ -58,11 +59,8 @@ function LoginPage() {
         style={{ background: "#0B1120" }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2 mb-auto">
-          <div className="w-8 h-8 rounded bg-[#14B8A6] flex items-center justify-center">
-            <span className="text-white text-sm font-bold">P</span>
-          </div>
-          <span className="text-white text-lg font-bold tracking-tight font-display">POSify</span>
+        <div className="mb-auto">
+          <BrandLogo inverted size="md" />
         </div>
 
         {/* POS Terminal Illustration */}
