@@ -45,7 +45,7 @@ function SettingsPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between pb-6 border-b border-border mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Syne, sans-serif" }}>
+          <h1 className="text-2xl font-bold text-foreground" >
             System Settings
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -61,7 +61,7 @@ function SettingsPage() {
           </button>
           <button
             onClick={() => toast.success("Configuration saved.")}
-            className="px-4 py-2 bg-[#14B8A6] hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] text-white rounded-lg text-sm font-medium transition-colors"
           >
             Save Configuration
           </button>
@@ -80,7 +80,7 @@ function SettingsPage() {
                 onClick={() => setActiveSection(item.id)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full text-left transition-colors ${
                   activeSection === item.id
-                    ? "bg-[#14B8A6]/10 text-[#14B8A6] font-semibold"
+                    ? "bg-primary/10 text-primary font-semibold"
                     : "text-muted-foreground hover:bg-muted"
                 }`}
               >
@@ -101,8 +101,8 @@ function SettingsPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-card-foreground">API Status</span>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#14B8A6] bg-[#14B8A6]/10 px-2 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                   Operational
                 </span>
               </div>
@@ -136,7 +136,7 @@ function SettingsPage() {
                     type="text"
                     value={systemName}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSystemName(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-lg bg-card text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6]"
+                    className="px-3 py-2 border border-border rounded-lg bg-card text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <p className="text-xs text-muted-foreground">Displayed in top navigation and emails.</p>
                 </div>
@@ -147,7 +147,7 @@ function SettingsPage() {
                   <select
                     value={timezone}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTimezone(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-lg bg-card text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="px-3 py-2 border border-border rounded-lg bg-card text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="UTC">UTC (Coordinated Universal Time)</option>
                     <option value="EST">EST (Eastern Standard Time)</option>
@@ -196,7 +196,7 @@ function SettingsPage() {
                       <p className="text-sm font-semibold text-card-foreground">{item.label}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
                     </div>
-                    <div className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors ${item.enabled ? "bg-[#14B8A6]" : "bg-muted"}`}>
+                    <div className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors ${item.enabled ? "bg-primary" : "bg-muted"}`}>
                       <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${item.enabled ? "translate-x-5" : "translate-x-1"}`} />
                     </div>
                   </div>
@@ -229,7 +229,7 @@ function SettingsPage() {
                     href="/swagger-ui.html"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-[#14B8A6] font-medium hover:underline"
+                    className="text-sm text-primary font-medium hover:underline"
                   >
                     Open Docs →
                   </a>

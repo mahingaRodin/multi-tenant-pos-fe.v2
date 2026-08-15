@@ -34,7 +34,7 @@ function ShiftsPage() {
   return (
     <div className="p-6">
       <h1 className="font-display text-2xl font-bold">Branch shifts</h1>
-      <h2 className="mt-6 font-semibold text-[#0D7377]">Ongoing</h2>
+      <h2 className="mt-6 font-semibold text-primary">Ongoing</h2>
       <ShiftTable rows={open} />
       <h2 className="mt-8 font-semibold">All shifts</h2>
       <ShiftTable rows={all} />

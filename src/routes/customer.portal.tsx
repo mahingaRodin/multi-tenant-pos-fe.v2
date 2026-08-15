@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { BranchDto, CategoryDto, PagedResponse, ProductDto, StoreDto } from "@/lib/types";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, productImg } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -142,12 +142,12 @@ function Shop() {
         {products.map((p) => (
           <article key={p.id} className="overflow-hidden rounded-xl border bg-card">
             <div className="h-36 bg-muted">
-              {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : null}
+              <img src={productImg(p.image)} alt="" className="h-full w-full object-cover" />
             </div>
             <div className="p-3">
               <p className="text-xs text-muted-foreground">{p.storeBrand} · {p.categoryName ?? "General"}</p>
               <h3 className="font-semibold">{p.name}</h3>
-              <p className="text-sm text-[#0D7377]">{fmtMoney(p.sellingPrice)}</p>
+              <p className="text-sm text-primary">{fmtMoney(p.sellingPrice)}</p>
               <p className="text-xs text-muted-foreground">Stock {p.stockQuantity ?? 0} · {p.brand}</p>
               <div className="mt-2 flex gap-2">
                 <Button size="sm" onClick={() => addCart(p.id)}><ShoppingCart className="size-3" /> Cart</Button>

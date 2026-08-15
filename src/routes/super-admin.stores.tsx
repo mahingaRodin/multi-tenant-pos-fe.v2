@@ -19,12 +19,13 @@ export const Route = createFileRoute("/super-admin/stores")({
   ),
 });
 
-function statusBadge(status?: string | null) {
-  if (status === "ACTIVE")
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#14B8A6]/10 text-[#14B8A6] uppercase tracking-wider">Active</span>;
-  if (status === "PENDING")
+function statusBadge(status?: StoreDto["status"] | null) {
+  const normalized = normalizeStoreStatus(status ?? undefined);
+  if (normalized === "ACTIVE")
+    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary uppercase tracking-wider">Active</span>;
+  if (normalized === "PENDING")
     return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Pending</span>;
-  if (status === "BLOCKED")
+  if (normalized === "BLOCKED")
     return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 uppercase tracking-wider">Blocked</span>;
   return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-muted text-muted-foreground uppercase tracking-wider">Unknown</span>;
 }
@@ -128,7 +129,7 @@ function StoresPage() {
         </div>
         <button
           onClick={() => openModal()}
-          className="bg-[#14B8A6] hover:bg-teal-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+          className="bg-primary hover:bg-[var(--primary-hover)] text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
         >
           <span className="text-base leading-none font-bold">+</span>
           Add Store
@@ -143,7 +144,7 @@ function StoresPage() {
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             placeholder="Search by store name, ID, or email..."
-            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] bg-card"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-card"
           />
         </div>
       </div>
@@ -219,7 +220,7 @@ function StoresPage() {
                               {store.status !== "ACTIVE" && (
                                 <button
                                   onClick={() => store.id && handleModerate(store.id, "ACTIVE")}
-                                  className="w-full text-left px-4 py-2 hover:bg-muted text-[#14B8A6]"
+                                  className="w-full text-left px-4 py-2 hover:bg-muted text-primary"
                                 >
                                   Activate Store
                                 </button>

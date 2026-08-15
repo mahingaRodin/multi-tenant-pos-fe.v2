@@ -2,10 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { StoreDto, PagedResponse, BranchDto, OrderDto, AdminNotification } from "@/lib/types";
+import type { StoreDto, PagedResponse, BranchDto, AdminNotification, AnalyticsSummary } from "@/lib/types";
 import { normalizeStoreStatus } from "@/lib/types";
 import { Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/super-admin/dashboard")({
   component: () => (
@@ -84,41 +85,16 @@ function DashboardHome() {
       setBranchCountByStore(branchMap);
       setTotalBranches(totalBranchCount);
 
-      // 3. Fetch orders for every branch in parallel
-      let orderCount = 0;
-      let revenue = 0;
-
-      if (allBranches.length > 0) {
-        const orderResults = await Promise.allSettled(
-          allBranches
-            .filter((b) => b.id)
-            .map((b) =>
-              api
-                .get<PagedResponse<OrderDto>>(`/api/orders/branch/${b.id}`, {
-                  params: { page: 0, size: 500 },
-                })
-                .then((r) => {
-                  const content = r.data?.content ?? [];
-                  const total = r.data?.totalElements ?? content.length;
-                  return { total: Math.max(total, content.length), orders: content };
-                })
-            )
-        );
-
-        orderResults.forEach((r) => {
-          if (r.status === "fulfilled") {
-            orderCount += r.value.total;
-            r.value.orders.forEach((o) => {
-              revenue += o.totalAmount ?? 0;
-            });
-          }
-        });
-      }
-
-      setTotalOrders(orderCount);
-      setSystemRevenue(revenue);
+      const [analyticsRes] = await Promise.all([
+        api.get<AnalyticsSummary>("/api/analytics/platform"),
+      ]);
+      const analytics = analyticsRes.data;
+      setTotalOrders(analytics.orderCount ?? 0);
+      setSystemRevenue(analytics.revenue ?? 0);
+      setTotalBranches(analytics.branchCount ?? totalBranchCount);
+      toast.success("Dashboard updated");
     } catch (err) {
-      console.error(getApiErrorMessage(err));
+      toast.error(getApiErrorMessage(err));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -141,12 +117,13 @@ function DashboardHome() {
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
     .slice(0, 5);
 
-  const statusBadge = (status?: string) => {
-    if (status === "ACTIVE")
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#14B8A6]/10 text-[#14B8A6] text-[11px] font-bold uppercase tracking-wider">Active</span>;
-    if (status === "PENDING")
+  const statusBadge = (status?: StoreDto["status"]) => {
+    const normalized = normalizeStoreStatus(status);
+    if (normalized === "ACTIVE")
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">Active</span>;
+    if (normalized === "PENDING")
       return <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[11px] font-bold uppercase tracking-wider">Pending</span>;
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[11px] font-bold uppercase tracking-wider">{status || "BLOCKED"}</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[11px] font-bold uppercase tracking-wider">{normalized || "BLOCKED"}</span>;
   };
 
   return (
@@ -167,7 +144,7 @@ function DashboardHome() {
           </button>
           <button
             onClick={() => navigate({ to: "/super-admin/stores" })}
-            className="bg-[#14B8A6] hover:bg-teal-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+            className="bg-primary hover:bg-[var(--primary-hover)] text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
           >
             <span className="text-lg leading-none">＋</span>
             Add Store
@@ -176,7 +153,7 @@ function DashboardHome() {
       </div>
 
       {ticker.length > 0 && (
-        <div className="mb-6 overflow-hidden rounded-lg border border-[#14B8A6]/40 bg-[#14B8A6]/10 py-2">
+        <div className="mb-6 overflow-hidden rounded-lg border border-primary/40 bg-primary/10 py-2">
           <div className="landing-marquee px-4 text-sm font-medium text-foreground">
             {ticker.map((t) => t.title).join("   •   ")}   •   {ticker.map((t) => t.title).join("   •   ")}
           </div>
@@ -195,8 +172,8 @@ function DashboardHome() {
               label="Total Stores"
               value={totalStores.toLocaleString()}
               icon="storefront"
-              iconBg="bg-[#14B8A6]/10"
-              iconColor="text-[#14B8A6]"
+              iconBg="bg-primary/10"
+              iconColor="text-primary"
             />
             <MetricCard
               label="Active Branches"
@@ -216,8 +193,8 @@ function DashboardHome() {
               label="System Revenue"
               value={formatRevenue(systemRevenue)}
               icon="payments"
-              iconBg="bg-[#14B8A6]/10"
-              iconColor="text-[#14B8A6]"
+              iconBg="bg-primary/10"
+              iconColor="text-primary"
             />
           </div>
 
@@ -229,7 +206,7 @@ function DashboardHome() {
                 <h3 className="text-base font-semibold text-card-foreground">All Stores</h3>
                 <button
                   onClick={() => navigate({ to: "/super-admin/stores" })}
-                  className="text-[#14B8A6] text-sm font-medium hover:underline"
+                  className="text-primary text-sm font-medium hover:underline"
                 >
                   View All
                 </button>
@@ -289,12 +266,12 @@ function DashboardHome() {
                   ) : (
                     recentStores.slice(0, 3).map((store, i) => (
                       <div key={store.id ?? i} className="flex gap-4 relative z-10">
-                        <div className={`w-4 h-4 rounded-full shrink-0 mt-0.5 border-4 border-card ${store.status === "ACTIVE" ? "bg-[#14B8A6]" : store.status === "PENDING" ? "bg-amber-400" : "bg-red-400"}`} />
+                        <div className={`w-4 h-4 rounded-full shrink-0 mt-0.5 border-4 border-card ${store.status === "ACTIVE" ? "bg-primary" : store.status === "PENDING" ? "bg-amber-400" : "bg-red-400"}`} />
                         <div>
                           <p className="text-sm text-card-foreground">
                             <span className="font-medium">{store.brand}</span> registered{" "}
-                            <span className={store.status === "ACTIVE" ? "text-[#14B8A6]" : store.status === "PENDING" ? "text-amber-500" : "text-red-400"}>
-                              ({store.status?.toLowerCase()})
+                            <span className={normalizeStoreStatus(store.status) === "ACTIVE" ? "text-primary" : normalizeStoreStatus(store.status) === "PENDING" ? "text-amber-500" : "text-red-400"}>
+                              ({(normalizeStoreStatus(store.status) ?? "blocked").toLowerCase()})
                             </span>
                           </p>
                           <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
@@ -315,7 +292,7 @@ function DashboardHome() {
                     <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                       <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" strokeWidth="3.8" />
                       {activePercent > 0 && (
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#14B8A6" strokeWidth="3.8"
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3.8"
                           strokeDasharray={`${activePercent} ${100 - activePercent}`} />
                       )}
                       {pendingPercent > 0 && (
@@ -336,7 +313,7 @@ function DashboardHome() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-border pt-4">
                   {[
-                    { color: "bg-[#14B8A6]", label: "Active",  count: activeCount,  pct: `${activePercent}%`  },
+                    { color: "bg-primary", label: "Active",  count: activeCount,  pct: `${activePercent}%`  },
                     { color: "bg-amber-400",  label: "Pending", count: pendingCount, pct: `${pendingPercent}%` },
                     { color: "bg-red-400",    label: "Blocked", count: blockedCount, pct: `${blockedPercent}%` },
                   ].map((item) => (

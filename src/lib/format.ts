@@ -6,3 +6,9 @@ export function fmtMoney(value: number | undefined | null, currency = "USD") {
     return `$${n.toFixed(2)}`;
   }
 }
+
+export function productImg(src?: string | null) {
+  return src && src.trim()
+    ? src
+    : "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80";
+}

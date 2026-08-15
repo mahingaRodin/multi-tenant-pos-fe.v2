@@ -7,15 +7,15 @@ import {
   Trash2,
   PackageSearch,
   Loader2,
-  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { ProductDto } from "@/lib/types";
-import { fmtMoney } from "@/lib/format";
+import type { ProductDto, PagedResponse } from "@/lib/types";
+import { fmtMoney, productImg } from "@/lib/format";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductFormModal } from "@/components/store/ProductFormModal";
@@ -32,6 +32,9 @@ export const Route = createFileRoute("/store/products")({
 function ProductsPage() {
   const { storeId } = useAuthStore();
   const [products, setProducts] = useState<ProductDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
@@ -39,12 +42,21 @@ function ProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<ProductDto | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (p = page) => {
     if (!storeId) return;
     setLoading(true);
     try {
-      const res = await api.get<ProductDto[]>(`/api/products/store/${storeId}`);
-      setProducts(Array.isArray(res.data) ? res.data : []);
+      const path = searchQuery.trim()
+        ? `/api/products/store/${storeId}/search`
+        : `/api/products/store/${storeId}`;
+      const res = await api.get<PagedResponse<ProductDto>>(path, {
+        params: { page: p, size: 12, keyword: searchQuery.trim() || undefined },
+      });
+      const unwrapped = unwrapPage<ProductDto>(res.data);
+      setProducts(unwrapped.items);
+      setTotalPages(unwrapped.totalPages);
+      setTotal(unwrapped.total);
+      setPage(unwrapped.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -53,7 +65,7 @@ function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
@@ -76,15 +88,7 @@ function ProductsPage() {
     return Array.from(set).sort();
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCat = activeCategory === "All" || p.category?.name === activeCategory;
-      return matchesSearch && matchesCat;
-    });
-  }, [products, searchQuery, activeCategory]);
+  const filteredProducts = products;
 
   return (
     <div className="flex h-full flex-col">
@@ -113,6 +117,7 @@ function ProductsPage() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchProducts(0)}
               placeholder="Search products or SKU..."
               className="pl-9"
             />
@@ -170,18 +175,11 @@ function ProductsPage() {
                 className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-                  {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={p.image}
+                      src={productImg(p.image)}
                       alt={p.name}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-muted/50">
-                      <ImageIcon className="size-10 text-muted-foreground/30" />
-                    </div>
-                  )}
                   {p.category?.name && (
                     <div className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide shadow-sm backdrop-blur-sm">
                       {p.category.name}
@@ -191,7 +189,7 @@ function ProductsPage() {
                 <div className="flex flex-1 flex-col p-4">
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <h3 className="line-clamp-2 font-medium leading-tight">{p.name}</h3>
-                    <div className="font-display font-bold text-teal-600 dark:text-teal-400">
+                    <div className="font-display font-bold text-primary">
                       {fmtMoney(p.sellingPrice)}
                     </div>
                   </div>
@@ -224,6 +222,7 @@ function ProductsPage() {
             ))}
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={(p) => fetchProducts(p)} />
       </div>
 
       <ProductFormModal

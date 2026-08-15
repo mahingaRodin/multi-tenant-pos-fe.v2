@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Clock, DollarSign, Receipt, Banknote, Loader2, Calendar } from "lucide-react";
 import { format, differenceInMinutes } from "date-fns";
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AnimatedBarChart } from "@/components/charts/AnimatedCharts";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -201,41 +201,7 @@ function ShiftReportPage() {
               <div className="lg:col-span-2 rounded-xl border bg-card p-6 shadow-sm">
                 <h3 className="font-display text-lg font-bold mb-4">Hourly Sales Volume</h3>
                 <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={HOURLY_SALES}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="hsl(var(--muted))"
-                      />
-                      <XAxis
-                        dataKey="hour"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                        dy={10}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                        tickFormatter={(v) => `$${v}`}
-                      />
-                      <Tooltip
-                        cursor={{ fill: "hsl(var(--muted)/0.5)" }}
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          borderRadius: "8px",
-                          border: "1px solid hsl(var(--border))",
-                        }}
-                        formatter={(value) => [fmtMoney(Number(value)), "Sales"]}
-                      />
-                      <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <AnimatedBarChart data={HOURLY_SALES} xKey="hour" yKey="sales" />
                 </div>
               </div>
 

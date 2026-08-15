@@ -30,8 +30,10 @@ import type {
   PaymentType,
   ProductDto,
   ShiftReportDto,
+  PagedResponse,
 } from "@/lib/types";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, productImg } from "@/lib/format";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +63,9 @@ function PosTerminal() {
   const { currentShift, setCurrentShift } = useShiftStore();
 
   const [products, setProducts] = useState<ProductDto[]>([]);
+  const [productPage, setProductPage] = useState(0);
+  const [productPages, setProductPages] = useState(1);
+  const [productTotal, setProductTotal] = useState(0);
   const [inventory, setInventory] = useState<Record<string, number>>({});
   const [productQuery, setProductQuery] = useState("");
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -105,11 +110,16 @@ function PosTerminal() {
     setLoadingProducts(true);
     (async () => {
       try {
-        const path = productQuery.trim()
-          ? `/api/products/store/${storeId}/search?query=${encodeURIComponent(productQuery.trim())}`
-          : `/api/products/store/${storeId}`;
-        const r = await api.get<ProductDto[]>(path);
-        if (active) setProducts(Array.isArray(r.data) ? r.data : []);
+        const r = await api.get<PagedResponse<ProductDto>>(
+          productQuery.trim() ? `/api/products/store/${storeId}/search` : `/api/products/store/${storeId}`,
+          { params: { page: productPage, size: 12, keyword: productQuery.trim() || undefined } },
+        );
+        if (active) {
+          const u = unwrapPage<ProductDto>(r.data);
+          setProducts(u.items);
+          setProductPages(u.totalPages);
+          setProductTotal(u.total);
+        }
       } catch (err) {
         if (active) toast.error(getApiErrorMessage(err));
       } finally {
@@ -119,7 +129,7 @@ function PosTerminal() {
     return () => {
       active = false;
     };
-  }, [storeId, productQuery]);
+  }, [storeId, productQuery, productPage]);
 
   // Load inventory
   useEffect(() => {
@@ -127,10 +137,12 @@ function PosTerminal() {
     let active = true;
     (async () => {
       try {
-        const r = await api.get<InventoryDto[]>(`/api/inventories/branch/${branchId}`);
+        const r = await api.get<PagedResponse<InventoryDto>>(`/api/inventories/branch/${branchId}`, {
+          params: { page: 0, size: 200 },
+        });
         if (!active) return;
         const map: Record<string, number> = {};
-        for (const inv of r.data ?? []) {
+        for (const inv of unwrapPage<InventoryDto>(r.data).items) {
           if (inv.productId) map[inv.productId] = inv.quantity;
         }
         setInventory(map);
@@ -368,12 +380,7 @@ function PosTerminal() {
                       )}
                     >
                       <div className="mb-2 grid aspect-square place-items-center overflow-hidden rounded-lg bg-muted">
-                        {p.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <ShoppingCart className="size-8 text-muted-foreground/40" />
-                        )}
+                        <img src={productImg(p.image)} alt={p.name} className="h-full w-full object-cover" />
                       </div>
                       <div className="line-clamp-2 text-sm font-medium">{p.name}</div>
                       {p.sku && <div className="text-xs text-muted-foreground">{p.sku}</div>}
@@ -398,6 +405,12 @@ function PosTerminal() {
                 })}
               </div>
             )}
+            <PaginationBar
+              page={productPage}
+              totalPages={productPages}
+              total={productTotal}
+              onPage={(p) => setProductPage(p)}
+            />
           </div>
         </div>
 

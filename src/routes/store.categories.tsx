@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { CategoryDto } from "@/lib/types";
+import type { CategoryDto, PagedResponse } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,9 @@ export const Route = createFileRoute("/store/categories")({
 function CategoriesPage() {
   const { storeId } = useAuthStore();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,12 +41,18 @@ function CategoriesPage() {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (p = page) => {
     if (!storeId) return;
     setLoading(true);
     try {
-      const res = await api.get<CategoryDto[]>(`/api/categories/store/${storeId}`);
-      setCategories(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<CategoryDto>>(`/api/categories/store/${storeId}`, {
+        params: { page: p, size: 12 },
+      });
+      const u = unwrapPage<CategoryDto>(res.data);
+      setCategories(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -172,6 +182,7 @@ function CategoriesPage() {
               </ul>
             </div>
           )}
+          <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchCategories} />
         </div>
       </div>
 
