@@ -630,7 +630,7 @@ function UsersPage() {
               </button>
             </div>
             <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
                   <input
@@ -689,7 +689,7 @@ function UsersPage() {
                   className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
                   <input
@@ -746,7 +746,7 @@ function UsersPage() {
               </button>
             </div>
             <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
                   <input
@@ -796,7 +796,7 @@ function UsersPage() {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">Store ID</label>
                   <input

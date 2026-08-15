@@ -21,7 +21,9 @@ interface AuthState {
   storeId: string | null;
   branchId: string | null;
   userId: string | null;
+  hasHydrated: boolean;
   setSession: (jwt: string, user: UserDto) => void;
+  patchUser: (user: Partial<UserDto>) => void;
   logout: () => void;
 }
 
@@ -54,10 +56,21 @@ export const useAuthStore = create<AuthState>()(
       storeId: null,
       branchId: null,
       userId: null,
+      hasHydrated: false,
       setSession: (jwt, user) => {
         const merged = decodeAndMerge(jwt, user);
         set({ token: jwt, user, ...merged });
       },
+      patchUser: (partial) =>
+        set((s) => {
+          const user = { ...(s.user ?? { email: "" }), ...partial } as UserDto;
+          return {
+            user,
+            storeId: partial.storeId ?? user.storeId ?? s.storeId,
+            branchId: partial.branchId ?? user.branchId ?? s.branchId,
+            userId: partial.id ?? s.userId,
+          };
+        }),
       logout: () =>
         set({
           token: null,
@@ -75,6 +88,17 @@ export const useAuthStore = create<AuthState>()(
           ? { getItem: () => null, setItem: () => {}, removeItem: () => {} }
           : window.localStorage,
       ),
+      onRehydrateStorage: () => () => {
+        useAuthStore.setState({ hasHydrated: true });
+      },
+      partialize: (s) => ({
+        token: s.token,
+        user: s.user,
+        role: s.role,
+        storeId: s.storeId,
+        branchId: s.branchId,
+        userId: s.userId,
+      }),
     },
   ),
 );

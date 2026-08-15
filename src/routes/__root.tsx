@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useUIStore } from "@/stores/uiStore";
+import { useAuthStore } from "@/stores/authStore";
 
 function NotFoundComponent() {
   return (
@@ -93,11 +94,15 @@ function RootComponent() {
   useRouter();
   useEffect(() => {
     applyTheme();
+    const markReady = () => useAuthStore.setState({ hasHydrated: true });
+    const unsub = useAuthStore.persist.onFinishHydration(markReady);
+    if (useAuthStore.persist.hasHydrated()) markReady();
+    return unsub;
   }, [applyTheme]);
   return (
     <>
       <Outlet />
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-center" className="sm:!top-4" />
     </>
   );
 }

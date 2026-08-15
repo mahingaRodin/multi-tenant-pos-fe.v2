@@ -132,7 +132,7 @@ export function EmployeeFormModal({
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Employee" : "New Employee"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>First Name *</Label>
               <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} autoFocus />
