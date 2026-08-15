@@ -55,7 +55,7 @@ function CartPage() {
             <Button variant="ghost" onClick={async () => { await api.delete(`/api/shop/cart/${l.product.id}`); await load(); }}>Remove</Button>
           </div>
         ))}
-        {lines.length === 0 && <p className="text-sm text-muted-foreground">Cart is empty. <Link to="/customer/portal" className="text-[#14B8A6]">Browse products</Link></p>}
+        {lines.length === 0 && <p className="text-sm text-muted-foreground">Cart is empty. <Link to="/customer/portal" className="text-primary">Browse products</Link></p>}
       </div>
       {lines.length > 0 && (
         <div className="mt-6 grid gap-3">

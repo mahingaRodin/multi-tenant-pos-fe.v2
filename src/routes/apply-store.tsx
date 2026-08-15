@@ -79,7 +79,7 @@ function ApplyStorePage() {
               <label className="mb-1.5 block text-xs font-bold uppercase text-muted-foreground">Description</label>
               <textarea rows={4} {...register("businessDescription")} className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm" />
             </div>
-            <Button type="submit" disabled={busy} className="sm:col-span-2 bg-[#14B8A6] text-[#0F172A]">
+            <Button type="submit" disabled={busy} className="sm:col-span-2 bg-primary text-primary-foreground">
               {busy ? <Loader2 className="size-4 animate-spin" /> : "Submit for review"}
             </Button>
           </form>

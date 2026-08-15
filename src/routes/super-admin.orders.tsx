@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Loader2, Search, ChevronLeft, ChevronRight, Plus, Edit2, Trash2, MoreVertical, X } from "lucide-react";
+import { Loader2, Search, Plus, Edit2, Trash2, MoreVertical, X } from "lucide-react";
 import { format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { StoreDto, BranchDto, OrderDto, OrderItemDto, PagedResponse, EOrderStatus, PaymentType, UserDto } from "@/lib/types";
-// Note: Install react-hot-toast for toast notifications: pnpm add react-hot-toast
+import { toast } from "sonner";
+import { PaginationBar } from "@/components/shared/PaginationBar";
 
 export const Route = createFileRoute("/super-admin/orders")({
   component: () => (
@@ -52,6 +53,8 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [fetchNonce, setFetchNonce] = useState(0);
 
   // Modal states
@@ -85,9 +88,8 @@ function OrdersPage() {
       try {
         // Try new endpoint first: GET /api/orders (Super Admin only)
         try {
-          const bustSize = 100 + (Date.now() % 4);
           const ordersRes = await api.get<PagedResponse<OrderDto>>("/api/orders", {
-            params: { page: 0, size: bustSize },
+            params: { page: currentPage, size: PAGE_SIZE },
           });
           
           // Fetch stores and branches for enrichment
@@ -135,7 +137,12 @@ function OrdersPage() {
           });
 
           enrichedOrders.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-          if (mounted) setAllOrders(enrichedOrders);
+          if (mounted) {
+            setAllOrders(enrichedOrders);
+            setTotalPages(Math.max(ordersRes.data?.totalPages ?? 1, 1));
+            setTotal(ordersRes.data?.totalElements ?? enrichedOrders.length);
+            toast.success("Orders loaded");
+          }
         } catch {
           // Fallback: use old method (per-branch fetching)
           const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
@@ -205,15 +212,14 @@ function OrdersPage() {
           if (mounted) setAllOrders(orders);
         }
       } catch (err) {
-        console.error(getApiErrorMessage(err));
-        console.error("Failed to load orders");
+        toast.error(getApiErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
-  }, [fetchNonce]);
+  }, [fetchNonce, currentPage]);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return allOrders;
@@ -228,8 +234,7 @@ function OrdersPage() {
     );
   }, [allOrders, searchQuery]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageSlice = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const pageSlice = filtered;
 
   const totalRevenue = allOrders.reduce((s, o) => s + (o.totalAmount ?? 0), 0);
 
@@ -253,7 +258,7 @@ function OrdersPage() {
         items: formData.items || [],
         totalAmount: formData.totalAmount || 0,
       });
-      console.log("Order created successfully");
+      toast.success("Order created");
       setIsCreateModalOpen(false);
       setFetchNonce((n) => n + 1);
       // Reset form
@@ -360,7 +365,7 @@ function OrdersPage() {
             });
             setIsCreateModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-lg font-medium transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] text-white rounded-lg font-medium transition-colors"
         >
           <Plus className="size-4" />
           Create Order
@@ -375,7 +380,7 @@ function OrdersPage() {
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(0); }}
             placeholder="Search by order ID, store, branch, customer, or payment type…"
-            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] bg-card"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary bg-card"
           />
         </div>
       </div>
@@ -503,44 +508,7 @@ function OrdersPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Showing {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    disabled={currentPage === 0}
-                    onClick={() => setCurrentPage((p) => p - 1)}
-                    className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
-                  >
-                    <ChevronLeft className="size-5" />
-                  </button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i)}
-                      className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
-                        currentPage === i
-                          ? "bg-[#14B8A6]/20 text-[#14B8A6] font-bold"
-                          : "hover:bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  {totalPages > 5 && <span className="text-muted-foreground px-1">…</span>}
-                  <button
-                    disabled={currentPage >= totalPages - 1}
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
-                  >
-                    <ChevronRight className="size-5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <PaginationBar page={currentPage} totalPages={totalPages} total={total} onPage={setCurrentPage} />
           </>
         )}
       </div>
@@ -564,7 +532,7 @@ function OrdersPage() {
                 <select
                   value={formData.branchId}
                   onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select a branch</option>
                   {branches.map((b) => (
@@ -579,7 +547,7 @@ function OrdersPage() {
                 <select
                   value={formData.customerId || ""}
                   onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">No Customer</option>
                   {users.map((u) => (
@@ -595,7 +563,7 @@ function OrdersPage() {
                   <select
                     value={formData.paymentType}
                     onChange={(e) => setFormData({ ...formData, paymentType: e.target.value as PaymentType })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="CASH">Cash</option>
                     <option value="CARD">Card</option>
@@ -607,7 +575,7 @@ function OrdersPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as EOrderStatus })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="PENDING">Pending</option>
                     <option value="COMPLETED">Completed</option>
@@ -622,7 +590,7 @@ function OrdersPage() {
                   type="number"
                   value={formData.totalAmount || 0}
                   onChange={(e) => setFormData({ ...formData, totalAmount: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -636,7 +604,7 @@ function OrdersPage() {
               <button
                 onClick={handleCreateOrder}
                 disabled={isSubmitting || !formData.branchId}
-                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 Create Order
@@ -665,7 +633,7 @@ function OrdersPage() {
                 <select
                   value={formData.branchId}
                   onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select a branch</option>
                   {branches.map((b) => (
@@ -687,7 +655,7 @@ function OrdersPage() {
                   <select
                     value={formData.paymentType}
                     onChange={(e) => setFormData({ ...formData, paymentType: e.target.value as PaymentType })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="CASH">Cash</option>
                     <option value="CARD">Card</option>
@@ -699,7 +667,7 @@ function OrdersPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as EOrderStatus })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="PENDING">Pending</option>
                     <option value="COMPLETED">Completed</option>
@@ -714,7 +682,7 @@ function OrdersPage() {
                   type="number"
                   value={formData.totalAmount || 0}
                   onChange={(e) => setFormData({ ...formData, totalAmount: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -728,7 +696,7 @@ function OrdersPage() {
               <button
                 onClick={handleUpdateOrder}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 Update Order

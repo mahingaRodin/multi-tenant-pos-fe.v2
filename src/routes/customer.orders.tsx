@@ -16,7 +16,9 @@ import { format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { OrderDto } from "@/lib/types";
+import type { OrderDto, PagedResponse } from "@/lib/types";
+import { toast } from "sonner";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { fmtMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,36 +40,34 @@ export const Route = createFileRoute("/customer/orders")({
 function CustomerOrders() {
   const { userId } = useAuthStore();
   const [orders, setOrders] = useState<OrderDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDto | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    const fetchOrders = async () => {
-      if (!userId) return;
-      setLoading(true);
-      try {
-        const res = await api.get<OrderDto[]>(`/api/orders/customer/${userId}`);
-        if (mounted) {
-          // Sort by newest first
-          const sorted = (Array.isArray(res.data) ? res.data : []).sort((a, b) => {
-            if (!a.createdAt) return 1;
-            if (!b.createdAt) return -1;
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          });
-          setOrders(sorted);
-        }
-      } catch (err) {
-        console.error(getApiErrorMessage(err));
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
+  const load = async (p = 0) => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const res = await api.get<PagedResponse<OrderDto>>(`/api/orders/customer/${userId}`, {
+        params: { page: p, size: 12 },
+      });
+      const u = unwrapPage<OrderDto>(res.data);
+      setOrders(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchOrders();
-    return () => {
-      mounted = false;
-    };
+  useEffect(() => {
+    load(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const PaymentIcon = ({ type }: { type: string }) => {
@@ -160,6 +160,7 @@ function CustomerOrders() {
               })}
             </div>
           )}
+          <PaginationBar page={page} totalPages={totalPages} total={total} onPage={load} />
         </div>
       </div>
 

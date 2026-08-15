@@ -76,7 +76,7 @@ function ProfilePage() {
       <h1 className="font-display text-2xl font-bold">Your profile</h1>
       <p className="text-sm text-muted-foreground">Update how you appear across POSify.</p>
       <div className="mt-6 flex items-center gap-4">
-        <div className="size-20 overflow-hidden rounded-full bg-[#14B8A6] text-center text-2xl font-bold leading-[5rem] text-white">
+        <div className="size-20 overflow-hidden rounded-full bg-primary text-center text-2xl font-bold leading-[5rem] text-white">
           {form.profilePicture ? <img src={form.profilePicture} alt="" className="size-full object-cover" /> : (form.firstName[0] ?? "U")}
         </div>
         <input type="file" accept="image/*" onChange={(e) => onFile(e.target.files?.[0])} />

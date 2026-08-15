@@ -7,7 +7,8 @@ import { format } from "date-fns";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { RefundDto, OrderDto } from "@/lib/types";
+import type { RefundDto, OrderDto, PagedResponse } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { fmtMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,16 +43,25 @@ function RefundsPage() {
   const { branchId, userId, user } = useAuthStore();
   const { currentShift } = useShiftStore();
   const [refunds, setRefunds] = useState<RefundDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
 
-  const fetchRefunds = async () => {
+  const fetchRefunds = async (p = page) => {
     if (!branchId) return;
     setLoading(true);
     try {
-      const res = await api.get<RefundDto[]>(`/api/refunds/branch/${branchId}`);
-      setRefunds(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<RefundDto>>(`/api/refunds/branch/${branchId}`, {
+        params: { page: p, size: 12 },
+      });
+      const u = unwrapPage<RefundDto>(res.data);
+      setRefunds(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -143,6 +153,7 @@ function RefundsPage() {
             </div>
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchRefunds} />
       </div>
 
       <RefundFormModal

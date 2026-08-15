@@ -59,7 +59,7 @@ function BusinessesPage() {
       <p className="text-sm text-muted-foreground">Approve, reject, or ask for more information. Approved owners receive an activation email.</p>
 
       {ticker.length > 0 && (
-        <div className="mt-4 overflow-hidden rounded-lg border border-[#14B8A6]/40 bg-[#14B8A6]/10 py-2">
+        <div className="mt-4 overflow-hidden rounded-lg border border-primary/40 bg-primary/10 py-2">
           <div className="landing-marquee px-4 text-sm font-medium">
               {ticker.map((t) => t.title).join("   •   ")}   •   {ticker.map((t) => t.title).join("   •   ")}
             </div>
@@ -106,7 +106,7 @@ function BusinessesPage() {
         <Button variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button>
         <Button variant="outline" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
       </div>
-      <p className="mt-4 text-sm"><Link to="/super-admin/stores" className="text-[#14B8A6]">Open live stores</Link></p>
+      <p className="mt-4 text-sm"><Link to="/super-admin/stores" className="text-primary">Open live stores</Link></p>
     </div>
   );
 }

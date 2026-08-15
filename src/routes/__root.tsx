@@ -47,7 +47,7 @@ export const Route = createRootRoute({
         content:
           "POSify is a multi-tenant point-of-sale platform for stores, branches, cashiers, and customers — checkout, inventory, shifts, and analytics.",
       },
-      { name: "theme-color", content: "#0F172A" },
+      { name: "theme-color", content: "#4F46E5" },
     ],
     links: [
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
@@ -60,7 +60,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap",
       },
       {
         rel: "stylesheet",

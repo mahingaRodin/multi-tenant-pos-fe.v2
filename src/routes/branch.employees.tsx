@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import type { PagedResponse, UserDto } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/branch/employees")({
@@ -18,12 +19,19 @@ export const Route = createFileRoute("/branch/employees")({
 function BranchEmployees() {
   const { branchId } = useAuthStore();
   const [rows, setRows] = useState<UserDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
 
-  const load = async () => {
+  const load = async (p = page) => {
     if (!branchId) return;
-    const res = await api.get<PagedResponse<UserDto>>(`/api/employees/branch/${branchId}`, { params: { page: 0, size: 50 } });
-    setRows(res.data.content ?? []);
+    const res = await api.get<PagedResponse<UserDto>>(`/api/employees/branch/${branchId}`, { params: { page: p, size: 12 } });
+    const u = unwrapPage<UserDto>(res.data);
+    setRows(u.items);
+    setTotalPages(u.totalPages);
+    setTotal(u.total);
+    setPage(u.page);
   };
   useEffect(() => { load().catch((e) => toast.error(getApiErrorMessage(e))); }, [branchId]);
 
@@ -64,6 +72,7 @@ function BranchEmployees() {
           </tbody>
         </table>
       </div>
+      <PaginationBar page={page} totalPages={totalPages} total={total} onPage={load} />
     </div>
   );
 }

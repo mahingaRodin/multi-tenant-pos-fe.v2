@@ -29,6 +29,7 @@ import { Route as StoreEmployeesRouteImport } from './routes/store.employees'
 import { Route as StoreDashboardRouteImport } from './routes/store.dashboard'
 import { Route as StoreCategoriesRouteImport } from './routes/store.categories'
 import { Route as StoreBranchesRouteImport } from './routes/store.branches'
+import { Route as StoreAnalyticsRouteImport } from './routes/store.analytics'
 import { Route as PosShiftRouteImport } from './routes/pos.shift'
 import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
 import { Route as CustomerPortalRouteImport } from './routes/customer.portal'
@@ -40,6 +41,7 @@ import { Route as BranchOrdersRouteImport } from './routes/branch.orders'
 import { Route as BranchInventoryRouteImport } from './routes/branch.inventory'
 import { Route as BranchEmployeesRouteImport } from './routes/branch.employees'
 import { Route as BranchDashboardRouteImport } from './routes/branch.dashboard'
+import { Route as BranchAnalyticsRouteImport } from './routes/branch.analytics'
 
 const VerifyOtpRoute = VerifyOtpRouteImport.update({
   id: '/verify-otp',
@@ -141,6 +143,11 @@ const StoreBranchesRoute = StoreBranchesRouteImport.update({
   path: '/store/branches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreAnalyticsRoute = StoreAnalyticsRouteImport.update({
+  id: '/store/analytics',
+  path: '/store/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PosShiftRoute = PosShiftRouteImport.update({
   id: '/pos/shift',
   path: '/pos/shift',
@@ -196,6 +203,11 @@ const BranchDashboardRoute = BranchDashboardRouteImport.update({
   path: '/branch/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BranchAnalyticsRoute = BranchAnalyticsRouteImport.update({
+  id: '/branch/analytics',
+  path: '/branch/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -205,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/branch/analytics': typeof BranchAnalyticsRoute
   '/branch/dashboard': typeof BranchDashboardRoute
   '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
@@ -216,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/analytics': typeof StoreAnalyticsRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -238,6 +252,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/branch/analytics': typeof BranchAnalyticsRoute
   '/branch/dashboard': typeof BranchDashboardRoute
   '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
@@ -249,6 +264,7 @@ export interface FileRoutesByTo {
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/analytics': typeof StoreAnalyticsRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -272,6 +288,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
   '/verify-otp': typeof VerifyOtpRoute
+  '/branch/analytics': typeof BranchAnalyticsRoute
   '/branch/dashboard': typeof BranchDashboardRoute
   '/branch/employees': typeof BranchEmployeesRoute
   '/branch/inventory': typeof BranchInventoryRoute
@@ -283,6 +300,7 @@ export interface FileRoutesById {
   '/customer/portal': typeof CustomerPortalRoute
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
+  '/store/analytics': typeof StoreAnalyticsRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -307,6 +325,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signup'
     | '/verify-otp'
+    | '/branch/analytics'
     | '/branch/dashboard'
     | '/branch/employees'
     | '/branch/inventory'
@@ -318,6 +337,7 @@ export interface FileRouteTypes {
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/analytics'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -340,6 +360,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signup'
     | '/verify-otp'
+    | '/branch/analytics'
     | '/branch/dashboard'
     | '/branch/employees'
     | '/branch/inventory'
@@ -351,6 +372,7 @@ export interface FileRouteTypes {
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/analytics'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -373,6 +395,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signup'
     | '/verify-otp'
+    | '/branch/analytics'
     | '/branch/dashboard'
     | '/branch/employees'
     | '/branch/inventory'
@@ -384,6 +407,7 @@ export interface FileRouteTypes {
     | '/customer/portal'
     | '/pos/refunds'
     | '/pos/shift'
+    | '/store/analytics'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -407,6 +431,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SignupRoute: typeof SignupRoute
   VerifyOtpRoute: typeof VerifyOtpRoute
+  BranchAnalyticsRoute: typeof BranchAnalyticsRoute
   BranchDashboardRoute: typeof BranchDashboardRoute
   BranchEmployeesRoute: typeof BranchEmployeesRoute
   BranchInventoryRoute: typeof BranchInventoryRoute
@@ -418,6 +443,7 @@ export interface RootRouteChildren {
   CustomerPortalRoute: typeof CustomerPortalRoute
   PosRefundsRoute: typeof PosRefundsRoute
   PosShiftRoute: typeof PosShiftRoute
+  StoreAnalyticsRoute: typeof StoreAnalyticsRoute
   StoreBranchesRoute: typeof StoreBranchesRoute
   StoreCategoriesRoute: typeof StoreCategoriesRoute
   StoreDashboardRoute: typeof StoreDashboardRoute
@@ -575,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreBranchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/analytics': {
+      id: '/store/analytics'
+      path: '/store/analytics'
+      fullPath: '/store/analytics'
+      preLoaderRoute: typeof StoreAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pos/shift': {
       id: '/pos/shift'
       path: '/pos/shift'
@@ -652,6 +685,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BranchDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/branch/analytics': {
+      id: '/branch/analytics'
+      path: '/branch/analytics'
+      fullPath: '/branch/analytics'
+      preLoaderRoute: typeof BranchAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -663,6 +703,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SignupRoute: SignupRoute,
   VerifyOtpRoute: VerifyOtpRoute,
+  BranchAnalyticsRoute: BranchAnalyticsRoute,
   BranchDashboardRoute: BranchDashboardRoute,
   BranchEmployeesRoute: BranchEmployeesRoute,
   BranchInventoryRoute: BranchInventoryRoute,
@@ -674,6 +715,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomerPortalRoute: CustomerPortalRoute,
   PosRefundsRoute: PosRefundsRoute,
   PosShiftRoute: PosShiftRoute,
+  StoreAnalyticsRoute: StoreAnalyticsRoute,
   StoreBranchesRoute: StoreBranchesRoute,
   StoreCategoriesRoute: StoreCategoriesRoute,
   StoreDashboardRoute: StoreDashboardRoute,

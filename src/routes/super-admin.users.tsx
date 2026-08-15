@@ -25,8 +25,8 @@ export const Route = createFileRoute("/super-admin/users")({
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   ROLE_SUPER_ADMIN:    { label: "Super Admin",     color: "bg-[#0F172A] text-white" },
-  ROLE_STORE_ADMIN:    { label: "Store Admin",      color: "bg-[#14B8A6]/20 text-[#0d9488]" },
-  ROLE_STORE_MANAGER:  { label: "Store Manager",    color: "bg-teal-50 text-teal-700" },
+  ROLE_STORE_ADMIN:    { label: "Store Admin",      color: "bg-primary/20 text-primary" },
+  ROLE_STORE_MANAGER:  { label: "Store Manager",    color: "bg-primary/10 text-primary" },
   ROLE_BRANCH_MANAGER: { label: "Branch Manager",   color: "bg-blue-50 text-blue-700" },
   ROLE_BRANCH_CASHIER: { label: "Cashier",          color: "bg-purple-50 text-purple-700" },
   ROLE_CUSTOMER:       { label: "Customer",         color: "bg-slate-100 text-slate-600" },
@@ -337,11 +337,11 @@ function UsersPage() {
     <div className="min-h-full bg-background p-8 font-sans">
       {/* Page Header */}
       <div className="mb-2">
-        <span className="text-[11px] font-bold text-[#14B8A6] uppercase tracking-widest">Enterprise Control</span>
+        <span className="text-[11px] font-bold text-primary uppercase tracking-widest">Enterprise Control</span>
       </div>
       <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Syne, sans-serif" }}>
+          <h1 className="text-2xl font-bold text-foreground" >
             User &amp; Role Management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -352,7 +352,7 @@ function UsersPage() {
           <select
             value={filterStatus}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value as EUserStatus | "ALL")}
-            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="ALL">All Status</option>
             {Object.entries(STATUS_LABELS).map(([val, cfg]) => (
@@ -362,7 +362,7 @@ function UsersPage() {
           <select
             value={filterRole}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterRole(e.target.value)}
-            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+            className="border border-border bg-card rounded-lg py-2 px-3 text-sm text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="ALL">All Roles</option>
             {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
@@ -383,7 +383,7 @@ function UsersPage() {
               });
               setIsCreateModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-lg font-medium transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] text-white rounded-lg font-medium transition-colors"
           >
             <Plus className="size-4" />
             Create User
@@ -417,7 +417,7 @@ function UsersPage() {
             value={searchQuery}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or ID..."
-            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:border-[#14B8A6] bg-card text-card-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-card text-card-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
@@ -637,7 +637,7 @@ function UsersPage() {
                     type="text"
                     value={formData.firstName || ""}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -646,7 +646,7 @@ function UsersPage() {
                     type="text"
                     value={formData.lastName || ""}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -656,7 +656,7 @@ function UsersPage() {
                   type="email"
                   value={formData.email || ""}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -665,7 +665,7 @@ function UsersPage() {
                   type="tel"
                   value={formData.phone || ""}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -673,7 +673,7 @@ function UsersPage() {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
                     <option key={val} value={val}>{cfg.label}</option>
@@ -686,7 +686,7 @@ function UsersPage() {
                   type="password"
                   value={formData.password || ""}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -697,7 +697,7 @@ function UsersPage() {
                     value={formData.storeId || ""}
                     onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
                     placeholder="Optional"
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -707,7 +707,7 @@ function UsersPage() {
                     value={formData.branchId || ""}
                     onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
                     placeholder="Optional"
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -722,7 +722,7 @@ function UsersPage() {
               <button
                 onClick={handleCreateUser}
                 disabled={isSubmitting || !formData.email || !formData.password}
-                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 Create User
@@ -753,7 +753,7 @@ function UsersPage() {
                     type="text"
                     value={formData.firstName || ""}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -762,7 +762,7 @@ function UsersPage() {
                     type="text"
                     value={formData.lastName || ""}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -772,7 +772,7 @@ function UsersPage() {
                   type="email"
                   value={formData.email || ""}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -781,7 +781,7 @@ function UsersPage() {
                   type="tel"
                   value={formData.phone || ""}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -789,7 +789,7 @@ function UsersPage() {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                  className="w-full px-3 py-2 border border-border rounded bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {Object.entries(ROLE_LABELS).map(([val, cfg]) => (
                     <option key={val} value={val}>{cfg.label}</option>
@@ -804,7 +804,7 @@ function UsersPage() {
                     value={formData.storeId || ""}
                     onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
                     placeholder="Optional"
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -814,7 +814,7 @@ function UsersPage() {
                     value={formData.branchId || ""}
                     onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
                     placeholder="Optional"
-                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+                    className="w-full px-3 py-2 border border-border rounded bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -829,7 +829,7 @@ function UsersPage() {
               <button
                 onClick={handleUpdateUser}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-[#14B8A6] hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 Update User

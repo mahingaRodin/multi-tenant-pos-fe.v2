@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { InventoryDto, ProductDto } from "@/lib/types";
+import type { InventoryDto, ProductDto, PagedResponse } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
+import { productImg } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -23,6 +25,9 @@ export const Route = createFileRoute("/branch/inventory")({
 function InventoryPage() {
   const { branchId, storeId } = useAuthStore();
   const [inventories, setInventories] = useState<InventoryDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [products, setProducts] = useState<ProductDto[]>([]); // for assigning new inventory
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,16 +36,20 @@ function InventoryPage() {
   const [editQty, setEditQty] = useState<string>("");
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (p = page) => {
     if (!branchId || !storeId) return;
     setLoading(true);
     try {
       const [invRes, prodRes] = await Promise.all([
-        api.get<InventoryDto[]>(`/api/inventories/branch/${branchId}`),
-        api.get<ProductDto[]>(`/api/products/store/${storeId}`),
+        api.get<PagedResponse<InventoryDto>>(`/api/inventories/branch/${branchId}`, { params: { page: p, size: 12 } }),
+        api.get<PagedResponse<ProductDto>>(`/api/products/store/${storeId}`, { params: { page: 0, size: 100 } }),
       ]);
-      setInventories(Array.isArray(invRes.data) ? invRes.data : []);
-      setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      const inv = unwrapPage<InventoryDto>(invRes.data);
+      setInventories(inv.items);
+      setTotalPages(inv.totalPages);
+      setTotal(inv.total);
+      setPage(inv.page);
+      setProducts(unwrapPage<ProductDto>(prodRes.data).items);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -151,16 +160,11 @@ function InventoryPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded bg-muted overflow-hidden">
-                              {inv.product?.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
-                                  src={inv.product.image}
-                                  alt={inv.product.name}
+                                  src={productImg(inv.product?.image)}
+                                  alt={inv.product?.name}
                                   className="object-cover w-full h-full"
                                 />
-                              ) : (
-                                <Package className="size-5 text-muted-foreground" />
-                              )}
                             </div>
                             <span className="font-medium line-clamp-2 max-w-[200px]">
                               {inv.product?.name || "Unknown Product"}
@@ -254,6 +258,7 @@ function InventoryPage() {
             </div>
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchData} />
 
         {/* Missing Inventory Records Section */}
         {!loading && products.length > 0 && (

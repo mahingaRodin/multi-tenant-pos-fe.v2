@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { UserDto } from "@/lib/types";
+import type { UserDto, PagedResponse } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { EmployeeFormModal } from "@/components/store/EmployeeFormModal";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -34,17 +35,26 @@ function roleDisplay(role?: string) {
 function EmployeesPage() {
   const { storeId } = useAuthStore();
   const [employees, setEmployees] = useState<UserDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<UserDto | null>(null);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (p = page) => {
     if (!storeId) return;
     setLoading(true);
     try {
-      const res = await api.get<UserDto[]>(`/api/employees/store/${storeId}`);
-      setEmployees(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<UserDto>>(`/api/employees/store/${storeId}`, {
+        params: { page: p, size: 12 },
+      });
+      const u = unwrapPage<UserDto>(res.data);
+      setEmployees(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -173,6 +183,7 @@ function EmployeesPage() {
             ))}
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchEmployees} />
       </div>
 
       <EmployeeFormModal

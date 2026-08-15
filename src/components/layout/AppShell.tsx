@@ -73,6 +73,7 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/branch/employees", label: "Employees", icon: Users },
     { to: "/branch/shifts", label: "Shifts", icon: ClipboardList },
     { to: "/branch/orders", label: "Orders", icon: Receipt },
+    { to: "/branch/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_BRANCH_CASHIER: [
@@ -133,11 +134,10 @@ export function AppShell({ allow, children }: AppShellProps) {
     "U";
 
   return (
-    <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
+    <div className="flex h-screen w-full overflow-hidden">
       <aside
         className={cn(
-          "flex flex-col shrink-0 transition-all duration-200",
+          "sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden",
           sidebarOpen ? "w-[220px]" : "w-16",
         )}
         style={{ background: "#0F172A" }}
@@ -147,7 +147,7 @@ export function AppShell({ allow, children }: AppShellProps) {
           <BrandLogo to={false} wordmark={false} size="sm" />
           {sidebarOpen && (
             <div>
-              <div className="text-white text-sm font-bold leading-none" style={{ fontFamily: "Syne, sans-serif" }}>POSify</div>
+              <div className="text-white text-sm font-bold leading-none">POSify</div>
               <div className="text-slate-400 text-[10px] leading-none mt-0.5">{user?.firstName ? `${user.firstName}'s Branch` : roleLabel(role)}</div>
             </div>
           )}
@@ -159,7 +159,7 @@ export function AppShell({ allow, children }: AppShellProps) {
             <Link
               to="/pos"
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-bold text-white transition-colors"
-              style={{ background: "#14B8A6" }}
+              style={{ background: 'var(--primary)' }}
             >
               <span className="text-lg leading-none font-bold">+</span>
               New Sale
@@ -168,7 +168,7 @@ export function AppShell({ allow, children }: AppShellProps) {
         )}
 
         {/* Nav Items */}
-        <nav className="flex-1 py-2">
+        <nav className="min-h-0 flex-1 overflow-hidden py-2">
           {items.map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
@@ -180,7 +180,7 @@ export function AppShell({ allow, children }: AppShellProps) {
                   "flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150 border-l-4",
                   sidebarOpen ? "px-5" : "px-0 justify-center",
                   active
-                    ? "border-[#14B8A6] bg-white/5 text-white"
+                    ? "border-primary bg-white/5 text-white"
                     : "border-transparent text-slate-400 hover:text-white hover:bg-white/5",
                 )}
               >
@@ -218,8 +218,7 @@ export function AppShell({ allow, children }: AppShellProps) {
         </div>
       </aside>
 
-      {/* Main Area */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* Top Header */}
         <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6 shrink-0">
           <div className="flex items-center gap-3 flex-1">
@@ -233,14 +232,14 @@ export function AppShell({ allow, children }: AppShellProps) {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full pl-9 pr-3 py-2 bg-muted rounded-lg text-sm border border-transparent text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#14B8A6] focus:bg-card"
+                className="w-full pl-9 pr-3 py-2 bg-muted rounded-lg text-sm border border-transparent text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:bg-card"
               />
             </div>
           </div>
           <div className="flex items-center gap-2 ml-4">
             {/* Register Status badge (super admin) */}
             {role === "ROLE_SUPER_ADMIN" && (
-              <button className="hidden sm:flex border border-[#14B8A6] text-[#14B8A6] text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#14B8A6]/5 transition-colors">
+              <button className="hidden sm:flex border border-primary text-primary text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary/5 transition-colors">
                 Register Status
               </button>
             )}
@@ -254,7 +253,7 @@ export function AppShell({ allow, children }: AppShellProps) {
             <ThemeToggle />
             <Link
               to="/profile"
-              className="w-8 h-8 rounded-full bg-[#14B8A6] flex items-center justify-center text-white text-xs font-bold ml-1 overflow-hidden"
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold ml-1 overflow-hidden"
             >
               {user?.profilePicture ? (
                 <img src={user.profilePicture} alt="" className="size-full object-cover" />
@@ -265,7 +264,7 @@ export function AppShell({ allow, children }: AppShellProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto bg-background">{children ?? <Outlet />}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-background">{children ?? <Outlet />}</main>
       </div>
     </div>
   );

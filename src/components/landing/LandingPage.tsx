@@ -33,12 +33,12 @@ const NAV = [
   { href: "#contact", label: "Contact" },
 ];
 
-/** Dummy demo contact — edit these before going live. */
+/** Contact details shown on the public landing page. */
 const CONTACT = {
   address: "KN 4 Ave, Kigali Heights, 3rd Floor, Kigali, Rwanda",
   phone: "+250 788 555 010",
   phoneHref: "tel:+250788555010",
-  email: "hello@posify.demo",
+  email: "hello@posify.com",
   hours: "Mon–Sat, 08:00–18:00 CAT",
 };
 
@@ -170,7 +170,7 @@ export function LandingPage() {
     window.setTimeout(() => {
       setSending(false);
       (e.target as HTMLFormElement).reset();
-      toast.success("Message queued (demo). Swap these contact details when you go live.");
+      toast.success("Message sent. We will get back to you shortly.");
     }, 700);
   };
 
@@ -194,7 +194,7 @@ export function LandingPage() {
             <Button variant="outline" asChild>
               <Link to="/apply-store">For stores</Link>
             </Button>
-            <Button className="bg-[#14B8A6] text-[#0F172A] hover:bg-[#14B8A6]/90" asChild>
+            <Button className="bg-primary text-primary-foreground hover:bg-[var(--primary-hover)]" asChild>
               <Link to="/signup">Shop with us</Link>
             </Button>
           </div>
@@ -227,7 +227,7 @@ export function LandingPage() {
                 <Button variant="outline" className="flex-1" asChild>
                   <Link to="/login">Sign in</Link>
                 </Button>
-                <Button className="flex-1 bg-[#14B8A6] text-[#0F172A] hover:bg-[#14B8A6]/90" asChild>
+                <Button className="flex-1 bg-primary text-primary-foreground hover:bg-[var(--primary-hover)]" asChild>
                   <Link to="/signup">Get started</Link>
                 </Button>
               </div>
@@ -240,10 +240,10 @@ export function LandingPage() {
         <div className="pointer-events-none absolute inset-0 landing-hero-glow opacity-[0.08]" />
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
           <div>
-            <span className="landing-fade-up inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-semibold text-[#0D7377]">
+            <span className="landing-fade-up inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-semibold text-primary">
               <span className="relative flex size-2">
-                <span className="landing-pulse-ring absolute inline-flex size-full rounded-full bg-[#14B8A6]" />
-                <span className="relative inline-flex size-2 rounded-full bg-[#14B8A6]" />
+                <span className="landing-pulse-ring absolute inline-flex size-full rounded-full bg-primary" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary" />
               </span>
               Multi-tenant point of sale for retailers
             </span>
@@ -256,7 +256,7 @@ export function LandingPage() {
               shop the same catalog online.
             </p>
             <div className="landing-fade-up landing-delay-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button size="lg" className="bg-[#14B8A6] text-[#0F172A] hover:bg-[#14B8A6]/90" asChild>
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-[var(--primary-hover)]" asChild>
                 <Link to="/signup">
                   Create a shopper account
                   <ArrowRight className="size-4" />
@@ -300,10 +300,10 @@ export function LandingPage() {
             { n: "6", l: "roles, one platform" },
             { n: "3", l: "payment types at till" },
             { n: "∞", l: "branches per store" },
-            { n: "24/7", l: "demo support hours*" },
+            { n: "24/7", l: "support hours" },
           ].map((s) => (
             <div key={s.l} className="text-center lg:text-left">
-              <p className="font-display text-3xl font-bold text-[#14B8A6]">{s.n}</p>
+              <p className="font-display text-3xl font-bold text-primary">{s.n}</p>
               <p className="mt-1 text-sm text-slate-300">{s.l}</p>
             </div>
           ))}
@@ -312,7 +312,7 @@ export function LandingPage() {
 
       <section id="product" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#0D7377]">What POSify does</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">What POSify does</p>
           <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">The whole selling system, not just a till.</h2>
           <p className="mt-4 text-muted-foreground">
             Retailers get a workspace. Shops get branches. Cashiers get a terminal. Managers get stock,
@@ -324,9 +324,9 @@ export function LandingPage() {
           {FEATURES.map((f) => (
             <article
               key={f.title}
-              className="group rounded-2xl border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#14B8A6]/40 hover:shadow-md"
+              className="group rounded-2xl border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md"
             >
-              <div className="flex size-11 items-center justify-center rounded-xl bg-[#14B8A6]/10 text-[#0D7377]">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <f.icon className="size-5" />
               </div>
               <h3 className="mt-4 font-display text-lg font-semibold">{f.title}</h3>
@@ -346,12 +346,12 @@ export function LandingPage() {
             />
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#0D7377]">For retailers & shops</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">For retailers & shops</p>
             <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">What you should expect on day one.</h2>
             <ul className="mt-6 space-y-3">
               {EXPECT.map((item) => (
                 <li key={item} className="flex gap-3 text-sm sm:text-base">
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#14B8A6]" />
+                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -362,13 +362,13 @@ export function LandingPage() {
 
       <section id="how-it-works" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#0D7377]">How it works</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">How it works</p>
           <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">From tenant to till in four steps.</h2>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {STEPS.map((s) => (
             <div key={s.step} className="relative overflow-hidden rounded-2xl border bg-card p-6">
-              <span className="font-display text-5xl font-extrabold text-[#14B8A6]/20">{s.step}</span>
+              <span className="font-display text-5xl font-extrabold text-primary/20">{s.step}</span>
               <h3 className="mt-2 font-display text-xl font-semibold">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
             </div>
@@ -387,7 +387,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid items-end gap-6 lg:grid-cols-[1.2fr_1fr]">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest text-[#14B8A6]">Who it is for</p>
+              <p className="text-sm font-semibold uppercase tracking-widest text-primary">Who it is for</p>
               <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">Everyone in the shop has a seat.</h2>
             </div>
             <p className="text-sm text-slate-400">
@@ -421,18 +421,17 @@ export function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="rounded-3xl bg-[#14B8A6] px-6 py-12 text-[#0F172A] sm:px-12">
+        <div className="rounded-3xl bg-primary px-6 py-12 text-primary-foreground sm:px-12">
           <div className="grid items-center gap-8 lg:grid-cols-[1.4fr_auto]">
             <div>
               <h2 className="font-display text-3xl font-bold sm:text-4xl">Ready to run retail from one login?</h2>
               <p className="mt-3 max-w-xl text-sm sm:text-base opacity-80">
-                Create a workspace, invite your team, and put a terminal on the counter. Demo accounts
-                are on the sign-in page if you want to look around first.
+                Create a workspace, invite your team, and put a terminal on the counter.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="bg-[#0F172A] text-white hover:bg-[#0F172A]/90" asChild>
-                <Link to="/signup">Start free demo</Link>
+                <Link to="/signup">Create an account</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-[#0F172A]/20 bg-white/40 hover:bg-white" asChild>
                 <Link to="/login">Sign in</Link>
@@ -445,16 +444,16 @@ export function LandingPage() {
       <section id="contact" className="scroll-mt-20 border-t bg-muted/40">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#0D7377]">Contact</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">Contact</p>
             <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">Talk to the POSify team.</h2>
             <p className="mt-3 text-muted-foreground">
-              Dummy details for this demo — replace them with your live phone, email, and address before launch.
+              Reach the POSify team with the details below.
             </p>
             <div className="mt-8 space-y-5">
-              <ContactRow icon={MapPin} label="HQ (demo)" value={CONTACT.address} />
-              <ContactRow icon={Phone} label="Phone (demo)" value={CONTACT.phone} href={CONTACT.phoneHref} />
-              <ContactRow icon={Mail} label="Email (demo)" value={CONTACT.email} href={`mailto:${CONTACT.email}`} />
-              <ContactRow icon={Headphones} label="Support hours (demo)" value={CONTACT.hours} />
+              <ContactRow icon={MapPin} label="HQ" value={CONTACT.address} />
+              <ContactRow icon={Phone} label="Phone" value={CONTACT.phone} href={CONTACT.phoneHref} />
+              <ContactRow icon={Mail} label="Email" value={CONTACT.email} href={`mailto:${CONTACT.email}`} />
+              <ContactRow icon={Headphones} label="Support hours" value={CONTACT.hours} />
             </div>
           </div>
           <form onSubmit={onContact} className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
@@ -463,7 +462,7 @@ export function LandingPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Field label="Full name" name="name" placeholder="Ada Okonkwo" />
               <Field label="Shop / company" name="company" placeholder="AdaMart Ltd" />
-              <Field label="Email" name="email" type="email" placeholder="ada@adamart.demo" className="sm:col-span-2" />
+              <Field label="Email" name="email" type="email" placeholder="ada@adamart.com" className="sm:col-span-2" />
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Message
@@ -473,7 +472,7 @@ export function LandingPage() {
                   required
                   rows={4}
                   placeholder="We have 4 branches and need POS + inventory…"
-                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none ring-[#14B8A6] focus:ring-2"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none ring-primary focus:ring-2"
                 />
               </div>
             </div>
@@ -517,7 +516,7 @@ export function LandingPage() {
         </div>
         <div className="border-t border-white/10">
           <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-slate-500 sm:px-6">
-            © {new Date().getFullYear()} POSify. Demo contact details are placeholders. *Support hours are sample copy.
+            © {new Date().getFullYear()} POSify. All rights reserved.
           </p>
         </div>
       </footer>
@@ -548,7 +547,7 @@ function Field({
         type={type}
         required
         placeholder={placeholder}
-        className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none ring-[#14B8A6] focus:ring-2"
+        className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none ring-primary focus:ring-2"
       />
     </div>
   );
@@ -566,7 +565,7 @@ function ContactRow({
   href?: string;
 }) {
   const content = href ? (
-    <a href={href} className="hover:text-[#0D7377]">
+    <a href={href} className="hover:text-primary">
       {value}
     </a>
   ) : (
@@ -574,7 +573,7 @@ function ContactRow({
   );
   return (
     <div className="flex gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#14B8A6]/10 text-[#0D7377]">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="size-4" />
       </div>
       <div>

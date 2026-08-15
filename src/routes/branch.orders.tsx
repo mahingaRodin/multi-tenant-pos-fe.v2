@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 
 export const Route = createFileRoute("/branch/orders")({
   component: () => (
@@ -41,20 +41,26 @@ export const Route = createFileRoute("/branch/orders")({
 function OrdersPage() {
   const { branchId } = useAuthStore();
   const [orders, setOrders] = useState<OrderDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [selectedOrder, setSelectedOrder] = useState<OrderDto | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (p = page) => {
     if (!branchId) return;
     setLoading(true);
     try {
       const res = await api.get<PagedResponse<OrderDto>>(`/api/orders/branch/${branchId}`, {
-        params: { page: 0, size: 200 },
+        params: { page: p, size: 12 },
       });
-      const data = res.data;
-      setOrders(Array.isArray(data?.content) ? data.content : Array.isArray(data) ? (data as unknown as OrderDto[]) : []);
+      const u = unwrapPage<OrderDto>(res.data);
+      setOrders(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -165,6 +171,7 @@ function OrdersPage() {
             )}
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchOrders} />
       </div>
 
       <OrderDetailsDialog

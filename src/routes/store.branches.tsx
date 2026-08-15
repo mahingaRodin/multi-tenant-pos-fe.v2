@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { BranchDto } from "@/lib/types";
+import type { BranchDto, PagedResponse } from "@/lib/types";
+import { PaginationBar, unwrapPage } from "@/components/shared/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { BranchFormModal } from "@/components/store/BranchFormModal";
 
@@ -22,17 +23,26 @@ function BranchesPage() {
   const { storeId } = useAuthStore();
   const navigate = useNavigate();
   const [branches, setBranches] = useState<BranchDto[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [branchToEdit, setBranchToEdit] = useState<BranchDto | null>(null);
 
-  const fetchBranches = async () => {
+  const fetchBranches = async (p = page) => {
     if (!storeId) return;
     setLoading(true);
     try {
-      const res = await api.get<BranchDto[]>(`/api/branches/store/${storeId}`);
-      setBranches(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<PagedResponse<BranchDto>>(`/api/branches/store/${storeId}`, {
+        params: { page: p, size: 12 },
+      });
+      const u = unwrapPage<BranchDto>(res.data);
+      setBranches(u.items);
+      setTotalPages(u.totalPages);
+      setTotal(u.total);
+      setPage(u.page);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -165,6 +175,7 @@ function BranchesPage() {
             ))}
           </div>
         )}
+        <PaginationBar page={page} totalPages={totalPages} total={total} onPage={fetchBranches} />
       </div>
 
       <BranchFormModal

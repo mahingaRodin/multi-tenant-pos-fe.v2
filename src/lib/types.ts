@@ -219,3 +219,25 @@ export interface AdminNotification {
   read: boolean;
   createdAt: string;
 }
+
+export interface DailyMetric {
+  day: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface NamedMetric {
+  name: string;
+  value: number;
+}
+
+export interface AnalyticsSummary {
+  revenue: number;
+  orderCount: number;
+  storeCount: number;
+  branchCount: number;
+  productCount: number;
+  daily: DailyMetric[];
+  byBranch: NamedMetric[];
+  topProducts: NamedMetric[];
+}
