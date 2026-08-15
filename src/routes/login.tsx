@@ -26,7 +26,7 @@ const fieldCls =
   "w-full rounded-xl border border-border bg-background px-3 py-3 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
 
 function LoginPage() {
-  const { token, role, setSession, hasHydrated } = useAuthStore();
+  const { token, role, setSession } = useAuthStore();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,14 +35,6 @@ function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
-
-  if (!hasHydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   if (token && role) return <Navigate to={dashboardPathFor(role)} />;
 

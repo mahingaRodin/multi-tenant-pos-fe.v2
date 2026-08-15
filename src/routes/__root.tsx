@@ -95,9 +95,14 @@ function RootComponent() {
   useEffect(() => {
     applyTheme();
     const markReady = () => useAuthStore.setState({ hasHydrated: true });
+    void useAuthStore.persist.rehydrate();
     const unsub = useAuthStore.persist.onFinishHydration(markReady);
     if (useAuthStore.persist.hasHydrated()) markReady();
-    return unsub;
+    const fallback = window.setTimeout(markReady, 50);
+    return () => {
+      unsub();
+      window.clearTimeout(fallback);
+    };
   }, [applyTheme]);
   return (
     <>

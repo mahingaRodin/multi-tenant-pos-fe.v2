@@ -6,7 +6,13 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-muted/50">
       <div className="relative hidden overflow-hidden lg:block lg:w-1/2">
-        <img src="/auth-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(145deg, #4F46E5 0%, #4338CA 42%, #0F172A 100%)",
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-[#0F172A]/30 to-transparent" />
         <div className="absolute left-8 top-8">
           <BrandLogo inverted size="md" />

@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
       storeId: null,
       branchId: null,
       userId: null,
-      hasHydrated: false,
+      hasHydrated: typeof window !== "undefined",
       setSession: (jwt, user) => {
         const merged = decodeAndMerge(jwt, user);
         set({ token: jwt, user, ...merged });
@@ -88,8 +88,11 @@ export const useAuthStore = create<AuthState>()(
           ? { getItem: () => null, setItem: () => {}, removeItem: () => {} }
           : window.localStorage,
       ),
+      skipHydration: true,
       onRehydrateStorage: () => () => {
-        useAuthStore.setState({ hasHydrated: true });
+        queueMicrotask(() => {
+          useAuthStore.setState({ hasHydrated: true });
+        });
       },
       partialize: (s) => ({
         token: s.token,
