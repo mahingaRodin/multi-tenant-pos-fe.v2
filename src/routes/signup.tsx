@@ -12,7 +12,6 @@ import { useAuthStore, dashboardPathFor } from "@/stores/authStore";
 import type { AuthResponse, Role } from "@/lib/types";
 
 const ALLOWED_ROLES: { value: Role; label: string }[] = [
-  { value: "ROLE_SUPER_ADMIN",    label: "Super Admin" },
   { value: "ROLE_STORE_MANAGER",  label: "Store Manager" },
   { value: "ROLE_BRANCH_MANAGER", label: "Branch Manager" },
   { value: "ROLE_BRANCH_CASHIER", label: "Cashier" },
@@ -24,7 +23,7 @@ const schema = z.object({
   lastName:  z.string().trim().min(1, "Required").max(60),
   email:     z.string().trim().email("Enter a valid email"),
   phone:     z.string().trim().max(30).optional().or(z.literal("")),
-  role:      z.enum(["ROLE_SUPER_ADMIN","ROLE_STORE_MANAGER","ROLE_BRANCH_MANAGER","ROLE_BRANCH_CASHIER","ROLE_CUSTOMER"], {
+  role:      z.enum(["ROLE_STORE_MANAGER","ROLE_BRANCH_MANAGER","ROLE_BRANCH_CASHIER","ROLE_CUSTOMER"], {
     required_error: "Select a role",
   }),
   password:        z.string().min(6, "At least 6 characters"),

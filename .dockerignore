@@ -1,0 +1,12 @@
+node_modules
+.git
+.github
+dist
+.output
+.wrangler
+.tanstack
+*.md
+.env
+.env.*
+!.env.example
+deploy

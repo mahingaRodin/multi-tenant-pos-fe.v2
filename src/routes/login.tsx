@@ -110,7 +110,17 @@ function LoginPage() {
           <h1 className="text-3xl font-bold text-foreground mb-1 font-display">
             Welcome back
           </h1>
-          <p className="text-muted-foreground text-sm mb-8">Enter your credentials to access your terminal.</p>
+          <p className="text-muted-foreground text-sm mb-4">Enter your credentials to access your terminal.</p>
+          <div className="mb-6 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="font-semibold text-foreground mb-1">Demo accounts (password: <code>Demo!123</code>)</p>
+            <ul className="space-y-0.5 font-mono">
+              <li>mahingarodin@gmail.com — Super Admin (<code>admin!123</code>)</li>
+              <li>manager@posify.demo — Store</li>
+              <li>branch@posify.demo — Branch</li>
+              <li>cashier@posify.demo — POS</li>
+              <li>customer@posify.demo — Shop</li>
+            </ul>
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
