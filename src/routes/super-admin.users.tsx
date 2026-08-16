@@ -1,14 +1,15 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { Search, Loader2, ChevronLeft, ChevronRight, MoreVertical, Plus, Edit2, Trash2, X } from "lucide-react";
+import { Search, Loader2, MoreVertical, Plus, Edit2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import { format } from "date-fns";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
 import type { UserDto, PagedResponse, Role, StoreDto, BranchDto, EUserStatus } from "@/lib/types";
+import { PaginationBar } from "@/components/shared/PaginationBar";
 
 interface EnrichedUser extends UserDto {
   storeName?: string;
@@ -298,17 +299,29 @@ function UsersPage() {
     setOpenMenuId(null);
   };
 
-  // Fetch on mount
-  useEffect(() => {
-    fetchUsers(0, filterStatus);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch when page or filterStatus changes
+  // Fetch when page or filterStatus changes (single source)
   useEffect(() => {
     fetchUsers(page, filterStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, filterStatus]);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("[data-user-menu]")) return;
+      setOpenMenuId(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuId(null);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openMenuId]);
 
   const filteredUsers = useMemo(() => {
     let result = users;
@@ -329,9 +342,6 @@ function UsersPage() {
   const adminCount = users.filter((u) => u.role === "ROLE_STORE_ADMIN").length;
   const managerCount = users.filter((u) => u.role === "ROLE_STORE_MANAGER" || u.role === "ROLE_BRANCH_MANAGER").length;
   const cashierCount = users.filter((u) => u.role === "ROLE_BRANCH_CASHIER").length;
-
-  const start = page * PAGE_SIZE + 1;
-  const end = Math.min((page + 1) * PAGE_SIZE, totalElements);
 
   return (
     <div className="min-h-full bg-background p-8 font-sans">
@@ -494,15 +504,23 @@ function UsersPage() {
                               {user.createdAt ? format(new Date(user.createdAt), "yyyy-MM-dd") : "—"}
                             </p>
                           </td>
-                          <td className="px-6 py-4 text-right relative">
+                          <td className="px-6 py-4 text-right relative" data-user-menu>
                             <button
-                              onClick={() => setOpenMenuId(openMenuId === user.id ? null : (user.id ?? null))}
-                              className="text-muted-foreground hover:text-card-foreground transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === user.id ? null : (user.id ?? null));
+                              }}
+                              className="text-muted-foreground hover:text-card-foreground transition-colors p-1.5 rounded-md hover:bg-muted"
+                              aria-label="More options"
                             >
                               <MoreVertical className="size-4" />
                             </button>
                             {openMenuId === user.id && (
-                              <div className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-48 py-1 text-sm">
+                              <div
+                                data-user-menu
+                                className="absolute right-6 top-10 z-50 bg-card border border-border rounded-lg shadow-lg w-48 py-1 text-sm"
+                              >
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -576,42 +594,12 @@ function UsersPage() {
               </table>
             </div>
 
-            {/* Pagination Footer */}
-            <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                {totalElements > 0 ? `Showing ${start} to ${end} of ${totalElements} entries` : "No entries"}
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`w-8 h-8 rounded text-sm font-mono transition-colors ${
-                      page === i
-                        ? "bg-muted text-card-foreground font-bold"
-                        : "hover:bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                {totalPages > 5 && <span className="text-muted-foreground px-1">...</span>}
-                <button
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="p-1 text-muted-foreground hover:bg-muted rounded disabled:opacity-40 transition-colors"
-                >
-                  <ChevronRight className="size-5" />
-                </button>
-              </div>
-            </div>
+            <PaginationBar
+              page={page}
+              totalPages={Math.max(totalPages, 1)}
+              total={totalElements}
+              onPage={setPage}
+            />
           </>
         )}
       </div>

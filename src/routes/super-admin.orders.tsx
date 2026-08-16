@@ -86,133 +86,55 @@ function OrdersPage() {
     const load = async () => {
       setLoading(true);
       try {
-        // Try new endpoint first: GET /api/orders (Super Admin only)
-        try {
-          const ordersRes = await api.get<PagedResponse<OrderDto>>("/api/orders", {
-            params: { page: currentPage, size: PAGE_SIZE },
-          });
-          
-          // Fetch stores and branches for enrichment
-          const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-            params: { page: 0, size: 100 },
-          });
-          const storesData = storeRes.data?.content ?? [];
-          if (mounted) setStores(storesData);
+        const ordersRes = await api.get<PagedResponse<OrderDto>>("/api/orders", {
+          params: { page: currentPage, size: PAGE_SIZE },
+        });
+        const orders = (ordersRes.data?.content ?? []).map((o) => ({
+          ...o,
+          storeBrand: o.storeBrand,
+          branchName: o.branchName,
+          customerName: o.customerName,
+        })) as EnrichedOrder[];
 
-          const branchResults = await Promise.allSettled(
-            storesData
-              .filter((s) => s.id)
-              .map((s) =>
-                api.get<PagedResponse<BranchDto>>(`/api/branches/store/${s.id}`, {
-                  params: { page: 0, size: 200 },
-                })
-              )
-          );
-          
-          const allBranches: BranchDto[] = [];
-          branchResults.forEach((r) => {
-            if (r.status === "fulfilled") allBranches.push(...(r.value.data?.content ?? []));
-          });
-          if (mounted) setBranches(allBranches);
+        if (mounted) {
+          setAllOrders(orders);
+          setTotalPages(Math.max(ordersRes.data?.totalPages ?? 1, 1));
+          setTotal(ordersRes.data?.totalElements ?? orders.length);
+        }
 
-          // Fetch customers for enrichment
-          const usersRes = await api.get<PagedResponse<UserDto>>("/api/users", {
-            params: { page: 0, size: 1000 },
-          });
-          const usersData = usersRes.data?.content ?? [];
-          if (mounted) setUsers(usersData);
-          const userMap = new Map(usersData.map((u) => [u.id, `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email]));
+        // Lightweight lookups for create/edit modals only (not on the critical path for the table)
+        if (stores.length === 0) {
+          api.get<PagedResponse<StoreDto>>("/api/stores", { params: { page: 0, size: 50 } })
+            .then((storeRes) => {
+              if (!mounted) return;
+              const storesData = storeRes.data?.content ?? [];
+              setStores(storesData);
+              return Promise.allSettled(
+                storesData.filter((s) => s.id).map((s) =>
+                  api.get<PagedResponse<BranchDto>>(`/api/branches/store/${s.id}`, {
+                    params: { page: 0, size: 100 },
+                  }),
+                ),
+              );
+            })
+            .then((branchResults) => {
+              if (!mounted || !branchResults) return;
+              const allBranches: BranchDto[] = [];
+              branchResults.forEach((r) => {
+                if (r.status === "fulfilled") allBranches.push(...(r.value.data?.content ?? []));
+              });
+              setBranches(allBranches);
+            })
+            .catch(() => undefined);
 
-          // Enrich orders with store/branch/customer names
-          const orders = ordersRes.data?.content ?? [];
-          const enrichedOrders: EnrichedOrder[] = orders.map((o) => {
-            const branch = allBranches.find((b) => b.id === o.branchId);
-            const store = storesData.find((s) => s.id === branch?.storeId);
-            return {
-              ...o,
-              branchName: branch?.name,
-              storeBrand: store?.brand,
-              customerName: o.customerId ? userMap.get(o.customerId) : undefined,
-            };
-          });
-
-          enrichedOrders.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-          if (mounted) {
-            setAllOrders(enrichedOrders);
-            setTotalPages(Math.max(ordersRes.data?.totalPages ?? 1, 1));
-            setTotal(ordersRes.data?.totalElements ?? enrichedOrders.length);
-            toast.success("Orders loaded");
-          }
-        } catch {
-          // Fallback: use old method (per-branch fetching)
-          const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-            params: { page: 0, size: 100 },
-          });
-          const stores: StoreDto[] = storeRes.data?.content ?? [];
-          if (mounted) setStores(stores);
-
-          const branchResults = await Promise.allSettled(
-            stores
-              .filter((s) => s.id)
-              .map((s) =>
-                api
-                  .get<PagedResponse<BranchDto>>(`/api/branches/store/${s.id}`, {
-                    params: { page: 0, size: 200 },
-                  })
-                  .then((r) => ({
-                    storeBrand: s.brand,
-                    branches: (r.data?.content ?? []).map((b) => ({ ...b, storeBrand: s.brand })),
-                  }))
-              )
-          );
-
-          const enrichedBranches: Array<BranchDto & { storeBrand: string }> = [];
-          branchResults.forEach((r) => {
-            if (r.status === "fulfilled") enrichedBranches.push(...r.value.branches);
-          });
-          if (mounted) setBranches(enrichedBranches);
-
-          const orderResults = await Promise.allSettled(
-            enrichedBranches
-              .filter((b) => b.id)
-              .map((b) =>
-                api
-                  .get<PagedResponse<OrderDto>>(`/api/orders/branch/${b.id}`, {
-                    params: { page: 0, size: 500 },
-                  })
-                  .then((r) =>
-                    (r.data?.content ?? []).map((o) => ({
-                      ...o,
-                      storeBrand: b.storeBrand,
-                      branchName: b.name,
-                    }))
-                  )
-              )
-          );
-
-          // Fetch customers for enrichment
-          const usersRes = await api.get<PagedResponse<UserDto>>("/api/users", {
-            params: { page: 0, size: 1000 },
-          });
-          const usersData = usersRes.data?.content ?? [];
-          if (mounted) setUsers(usersData);
-          const userMap = new Map(usersData.map((u) => [u.id, `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email]));
-
-          const orders: EnrichedOrder[] = [];
-          orderResults.forEach((r) => {
-            if (r.status === "fulfilled") orders.push(...r.value);
-          });
-
-          // Enrich with customer names
-          orders.forEach((o) => {
-            o.customerName = o.customerId ? userMap.get(o.customerId) : undefined;
-          });
-
-          orders.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-          if (mounted) setAllOrders(orders);
+          api.get<PagedResponse<UserDto>>("/api/users", { params: { page: 0, size: 100 } })
+            .then((usersRes) => {
+              if (mounted) setUsers(usersRes.data?.content ?? []);
+            })
+            .catch(() => undefined);
         }
       } catch (err) {
-        toast.error(getApiErrorMessage(err));
+        if (mounted) toast.error(getApiErrorMessage(err));
       } finally {
         if (mounted) setLoading(false);
       }
