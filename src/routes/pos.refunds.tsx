@@ -43,6 +43,7 @@ function RefundsPage() {
   const { branchId, userId, user } = useAuthStore();
   const { currentShift } = useShiftStore();
   const [refunds, setRefunds] = useState<RefundDto[]>([]);
+  const [pending, setPending] = useState<RefundDto[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -54,14 +55,20 @@ function RefundsPage() {
     if (!branchId) return;
     setLoading(true);
     try {
-      const res = await api.get<PagedResponse<RefundDto>>(`/api/refunds/branch/${branchId}`, {
-        params: { page: p, size: 12 },
-      });
+      const [res, pend] = await Promise.all([
+        api.get<PagedResponse<RefundDto>>(`/api/refunds/branch/${branchId}`, {
+          params: { page: p, size: 12 },
+        }),
+        api.get<PagedResponse<RefundDto>>(`/api/refunds/branch/${branchId}/pending`, {
+          params: { page: 0, size: 20 },
+        }),
+      ]);
       const u = unwrapPage<RefundDto>(res.data);
       setRefunds(u.items);
       setTotalPages(u.totalPages);
       setTotal(u.total);
       setPage(u.page);
+      setPending(unwrapPage<RefundDto>(pend.data).items);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -74,14 +81,36 @@ function RefundsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchId]);
 
+  const approve = async (id?: string) => {
+    if (!id) return;
+    try {
+      await api.post(`/api/refunds/${id}/approve-return`);
+      toast.success("Return approved — inventory restocked and refund completed");
+      fetchRefunds(page);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e));
+    }
+  };
+
+  const reject = async (id?: string) => {
+    if (!id) return;
+    try {
+      await api.post(`/api/refunds/${id}/reject`, { reason: "Return not received" });
+      toast.success("Refund request rejected");
+      fetchRefunds(page);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e));
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-muted/20">
       <div className="border-b bg-card px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold">Refunds</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Process customer returns and view refund history.
+            <p className="mt-1 text-sm text-muted-foreground">
+              Approve customer returns (restock) then refund, or process a till refund.
             </p>
           </div>
           <Button onClick={() => setModalOpen(true)}>
@@ -91,7 +120,30 @@ function RefundsPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        {pending.length > 0 && (
+          <div className="rounded-xl border border-amber-300/50 bg-amber-50/40 p-4 dark:bg-amber-950/20">
+            <h2 className="font-semibold">Pending returns awaiting approval</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Confirm the product is back at this branch before approving — stock is restored automatically.
+            </p>
+            <div className="mt-3 space-y-2">
+              {pending.map((r) => (
+                <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm">
+                  <div>
+                    <p className="font-medium">Order #{r.orderId?.slice(0, 8)} · {fmtMoney(r.amount)}</p>
+                    <p className="text-xs text-muted-foreground">{r.reason}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => approve(r.id)}>Approve return</Button>
+                    <Button size="sm" variant="outline" onClick={() => reject(r.id)}>Reject</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -100,27 +152,27 @@ function RefundsPage() {
           <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center shadow-sm">
             <RotateCcw className="mb-4 size-12 text-muted-foreground/50" />
             <h3 className="font-display text-lg font-bold">No refunds yet</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Refunds processed at this branch will appear here.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
+              <table className="w-full text-left text-sm">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 font-medium">Refund ID</th>
                     <th className="px-6 py-4 font-medium">Order ID</th>
                     <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
                     <th className="px-6 py-4 font-medium">Reason</th>
-                    <th className="px-6 py-4 font-medium">Cashier</th>
                     <th className="px-6 py-4 font-medium text-right">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {refunds.map((refund) => (
-                    <tr key={refund.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={refund.id} className="transition-colors hover:bg-muted/30">
                       <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                         {refund.id?.slice(0, 12)}...
                       </td>
@@ -138,11 +190,11 @@ function RefundsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <StatusBadge variant="pending">{refund.reason || "Return"}</StatusBadge>
+                        <StatusBadge variant={refund.status === "COMPLETED" ? "active" : "pending"}>
+                          {refund.status || "COMPLETED"}
+                        </StatusBadge>
                       </td>
-                      <td className="px-6 py-4 text-muted-foreground">
-                        {refund.cashierName || "Unknown"}
-                      </td>
+                      <td className="px-6 py-4">{refund.reason || "Return"}</td>
                       <td className="px-6 py-4 text-right font-display font-bold text-destructive">
                         -{fmtMoney(refund.amount)}
                       </td>

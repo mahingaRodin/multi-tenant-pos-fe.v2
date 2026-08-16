@@ -40,12 +40,22 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     const status = error.response?.status;
     const url = `${error.config?.baseURL ?? ""}${error.config?.url ?? ""}`;
-    const { token, logout, hasHydrated } = useAuthStore.getState();
+    const data = error.response?.data as ApiErrorBody | undefined;
+    const { token, logout, hasHydrated, role } = useAuthStore.getState();
     if (status === 401 && token && hasHydrated && !isAuthRequest(url)) {
       logout();
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
         window.location.href = "/login";
       }
+    }
+    if (
+      status === 403 &&
+      data?.error === "SUBSCRIPTION_BLOCKED" &&
+      role === "ROLE_STORE_ADMIN" &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/store/billing")
+    ) {
+      window.location.href = "/store/billing";
     }
     return Promise.reject(error);
   },

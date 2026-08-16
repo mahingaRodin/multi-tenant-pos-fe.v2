@@ -77,6 +77,24 @@ function StoresPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, fetchNonce]);
 
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("[data-store-menu]")) return;
+      setOpenMenuId(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuId(null);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openMenuId]);
+
   const handleModerate = async (id: string, newStatus: EStoreStatus) => {
     const labels: Record<EStoreStatus, string> = { ACTIVE: "activate", PENDING: "set to pending", BLOCKED: "block" };
     if (!confirm(`Are you sure you want to ${labels[newStatus]} this store?`)) return;
@@ -201,7 +219,7 @@ function StoresPage() {
                         <td className="px-6 py-4 text-right text-xs text-muted-foreground font-mono">
                           {store.createdAt ? format(new Date(store.createdAt), "yyyy-MM-dd") : "—"}
                         </td>
-                        <td className="px-6 py-4 text-right relative">
+                        <td className="px-6 py-4 text-right relative" data-store-menu>
                           <button
                             onClick={() => setOpenMenuId(openMenuId === store.id ? null : (store.id ?? null))}
                             className="text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 p-1 rounded"

@@ -29,6 +29,7 @@ import { Route as StoreEmployeesRouteImport } from './routes/store.employees'
 import { Route as StoreDashboardRouteImport } from './routes/store.dashboard'
 import { Route as StoreCategoriesRouteImport } from './routes/store.categories'
 import { Route as StoreBranchesRouteImport } from './routes/store.branches'
+import { Route as StoreBillingRouteImport } from './routes/store.billing'
 import { Route as StoreAnalyticsRouteImport } from './routes/store.analytics'
 import { Route as PosShiftRouteImport } from './routes/pos.shift'
 import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
@@ -143,6 +144,11 @@ const StoreBranchesRoute = StoreBranchesRouteImport.update({
   path: '/store/branches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreBillingRoute = StoreBillingRouteImport.update({
+  id: '/store/billing',
+  path: '/store/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreAnalyticsRoute = StoreAnalyticsRouteImport.update({
   id: '/store/analytics',
   path: '/store/analytics',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
+  '/store/billing': typeof StoreBillingRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
+  '/store/billing': typeof StoreBillingRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/pos/refunds': typeof PosRefundsRoute
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
+  '/store/billing': typeof StoreBillingRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
     | '/pos/refunds'
     | '/pos/shift'
     | '/store/analytics'
+    | '/store/billing'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/pos/refunds'
     | '/pos/shift'
     | '/store/analytics'
+    | '/store/billing'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/pos/refunds'
     | '/pos/shift'
     | '/store/analytics'
+    | '/store/billing'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -444,6 +456,7 @@ export interface RootRouteChildren {
   PosRefundsRoute: typeof PosRefundsRoute
   PosShiftRoute: typeof PosShiftRoute
   StoreAnalyticsRoute: typeof StoreAnalyticsRoute
+  StoreBillingRoute: typeof StoreBillingRoute
   StoreBranchesRoute: typeof StoreBranchesRoute
   StoreCategoriesRoute: typeof StoreCategoriesRoute
   StoreDashboardRoute: typeof StoreDashboardRoute
@@ -601,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreBranchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/billing': {
+      id: '/store/billing'
+      path: '/store/billing'
+      fullPath: '/store/billing'
+      preLoaderRoute: typeof StoreBillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store/analytics': {
       id: '/store/analytics'
       path: '/store/analytics'
@@ -716,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosRefundsRoute: PosRefundsRoute,
   PosShiftRoute: PosShiftRoute,
   StoreAnalyticsRoute: StoreAnalyticsRoute,
+  StoreBillingRoute: StoreBillingRoute,
   StoreBranchesRoute: StoreBranchesRoute,
   StoreCategoriesRoute: StoreCategoriesRoute,
   StoreDashboardRoute: StoreDashboardRoute,

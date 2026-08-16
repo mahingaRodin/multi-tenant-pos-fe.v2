@@ -24,6 +24,7 @@ import {
   Briefcase,
   Loader2,
   X,
+  CreditCard,
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -60,6 +61,7 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/store/categories", label: "Categories", icon: Tags },
     { to: "/store/employees", label: "Employees", icon: Users },
     { to: "/store/analytics", label: "Analytics", icon: BarChart3 },
+    { to: "/store/billing", label: "Billing", icon: CreditCard },
     { to: "/profile", label: "Profile", icon: UserCircle },
   ],
   ROLE_STORE_MANAGER: [
