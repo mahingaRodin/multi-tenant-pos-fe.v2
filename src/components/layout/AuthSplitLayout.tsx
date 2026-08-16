@@ -6,12 +6,11 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-muted/50">
       <div className="relative hidden overflow-hidden lg:block lg:w-1/2">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(145deg, #4F46E5 0%, #4338CA 42%, #0F172A 100%)",
-          }}
+        <img
+          src="/auth-hero.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-[#0F172A]/30 to-transparent" />
         <div className="absolute left-8 top-8">
@@ -19,7 +18,9 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="absolute bottom-10 left-8 right-8 text-white">
           <p className="font-display text-3xl font-bold leading-tight">Industrial power. Refined control.</p>
-          <p className="mt-2 max-w-md text-sm text-white/80">Multi-tenant POS for retailers — terminals, inventory, and live analytics.</p>
+          <p className="mt-2 max-w-md text-sm text-white/80">
+            Multi-tenant POS for retailers — terminals, inventory, and live analytics.
+          </p>
         </div>
       </div>
       <div className="relative flex flex-1 items-center justify-center p-6 sm:p-10">
