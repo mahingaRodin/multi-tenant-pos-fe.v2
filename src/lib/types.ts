@@ -127,6 +127,9 @@ export interface OrderDto {
   branchId: string;
   customerId?: string;
   cashierId?: string;
+  branchName?: string;
+  storeBrand?: string;
+  customerName?: string;
   items: OrderItemDto[];
   paymentType: PaymentType;
   status?: EOrderStatus;

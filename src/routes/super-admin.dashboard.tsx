@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, getApiErrorMessage } from "@/lib/api";
-import type { StoreDto, PagedResponse, BranchDto, AdminNotification, AnalyticsSummary } from "@/lib/types";
+import type { StoreDto, PagedResponse, AdminNotification, AnalyticsSummary } from "@/lib/types";
 import { normalizeStoreStatus } from "@/lib/types";
 import { Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
@@ -30,7 +30,6 @@ function DashboardHome() {
   const [totalBranches, setTotalBranches] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [systemRevenue, setSystemRevenue] = useState(0);
-  const [branchCountByStore, setBranchCountByStore] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [ticker, setTicker] = useState<AdminNotification[]>([]);
@@ -41,58 +40,26 @@ function DashboardHome() {
       api.get<{ items: AdminNotification[] }>("/api/admin/notifications/ticker")
         .then((r) => setTicker(r.data.items ?? []))
         .catch(() => undefined);
-      // 1. Fetch all stores — vary size to bust Spring Pageable cache key
-      const bustSize = 100 + (Date.now() % 4);
-      const storeRes = await api.get<PagedResponse<StoreDto>>("/api/stores", {
-        params: { page: 0, size: bustSize, direction: "DESC" },
-      });
-      const storeData = storeRes.data;
-      const storeList: StoreDto[] = (Array.isArray(storeData?.content) ? storeData.content : []).map((s) => ({
+
+      const [analyticsRes, storeRes] = await Promise.all([
+        api.get<AnalyticsSummary>("/api/analytics/platform"),
+        api.get<PagedResponse<StoreDto>>("/api/stores", {
+          params: { page: 0, size: 20, direction: "DESC" },
+        }),
+      ]);
+
+      const analytics = analyticsRes.data;
+      setTotalOrders(analytics.orderCount ?? 0);
+      setSystemRevenue(analytics.revenue ?? 0);
+      setTotalStores(analytics.storeCount ?? storeRes.data?.totalElements ?? 0);
+      setTotalBranches(analytics.branchCount ?? 0);
+
+      const storeList: StoreDto[] = (Array.isArray(storeRes.data?.content) ? storeRes.data.content : []).map((s) => ({
         ...s,
         status: normalizeStoreStatus(s.status),
       }));
       setStores(storeList);
-      setTotalStores(storeData?.totalElements ?? storeList.length);
-
-      // 2. Fetch branches for every store in parallel
-      const branchMap: Record<string, number> = {};
-      storeList.forEach((s) => { if (s.id) branchMap[s.id] = 0; });
-
-      const branchResults = await Promise.allSettled(
-        storeList
-          .filter((s) => s.id)
-          .map((s) =>
-            api
-              .get<PagedResponse<BranchDto>>(`/api/branches/store/${s.id}`, {
-                params: { page: 0, size: 200 },
-              })
-              .then((r) => {
-                const content = r.data?.content ?? [];
-                const total = r.data?.totalElements ?? content.length;
-                return { storeId: s.id!, total: Math.max(total, content.length), branches: content };
-              })
-          )
-      );
-
-      let allBranches: BranchDto[] = [];
-      branchResults.forEach((r) => {
-        if (r.status === "fulfilled") {
-          branchMap[r.value.storeId] = r.value.total;
-          allBranches = allBranches.concat(r.value.branches);
-        }
-      });
-      const totalBranchCount = Object.values(branchMap).reduce((a, b) => a + b, 0);
-      setBranchCountByStore(branchMap);
-      setTotalBranches(totalBranchCount);
-
-      const [analyticsRes] = await Promise.all([
-        api.get<AnalyticsSummary>("/api/analytics/platform"),
-      ]);
-      const analytics = analyticsRes.data;
-      setTotalOrders(analytics.orderCount ?? 0);
-      setSystemRevenue(analytics.revenue ?? 0);
-      setTotalBranches(analytics.branchCount ?? totalBranchCount);
-      toast.success("Dashboard updated");
+      if (!silent) toast.success("Dashboard updated");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -239,9 +206,7 @@ function DashboardHome() {
                               : "—"}
                           </td>
                           <td className="py-4 px-6 text-center text-card-foreground font-mono text-sm">
-                            {store.id !== undefined && store.id in branchCountByStore
-                              ? branchCountByStore[store.id]
-                              : "—"}
+                            —
                           </td>
                           <td className="py-4 px-6 text-center">{statusBadge(store.status)}</td>
                           <td className="py-4 px-6 text-right text-muted-foreground font-mono text-xs">
