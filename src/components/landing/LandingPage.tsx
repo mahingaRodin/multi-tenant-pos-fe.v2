@@ -28,9 +28,43 @@ import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 const NAV = [
   { href: "#product", label: "Product" },
+  { href: "#pricing", label: "Pricing" },
   { href: "#how-it-works", label: "How it works" },
   { href: "#roles", label: "Who it's for" },
   { href: "#contact", label: "Contact" },
+];
+
+const PRICING = [
+  {
+    name: "Free trial",
+    price: "$0",
+    period: "15 days",
+    blurb: "Full platform access while you set up stores, staff, and your first sales.",
+    cta: "Start free trial",
+    to: "/apply-store" as const,
+    featured: false,
+    perks: ["All core POS features", "Branches & inventory", "No card required to start"],
+  },
+  {
+    name: "Growth",
+    price: "$49",
+    period: "/mo",
+    blurb: "For growing retailers ready to keep selling after the trial.",
+    cta: "Choose Growth",
+    to: "/apply-store" as const,
+    featured: false,
+    perks: ["Up to 3 branches", "Staff invites & shifts", "Customer marketplace"],
+  },
+  {
+    name: "Pro",
+    price: "$99",
+    period: "/mo",
+    blurb: "Most popular — scale locations with analytics and priority support.",
+    cta: "Choose Pro",
+    to: "/apply-store" as const,
+    featured: true,
+    perks: ["Unlimited branches", "Advanced analytics", "Priority onboarding"],
+  },
 ];
 
 /** Contact details shown on the public landing page. */
@@ -307,6 +341,55 @@ export function LandingPage() {
               <p className="mt-1 text-sm text-slate-300">{s.l}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      </section>
+
+      <section id="pricing" className="scroll-mt-20 border-y bg-muted/30">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">Pricing</p>
+            <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">Start free. Switch when you&apos;re ready.</h2>
+            <p className="mt-4 text-muted-foreground">
+              Every new business gets 15 days free. After that, pick Growth or Pro — you can upgrade to Pro even while still on trial. Pay with card (demo now; live billing later).
+            </p>
+          </div>
+          <div className="mt-12 grid gap-5 lg:grid-cols-3">
+            {PRICING.map((plan) => (
+              <article
+                key={plan.name}
+                className={`relative flex flex-col rounded-2xl border p-6 ${
+                  plan.featured
+                    ? "border-primary bg-card shadow-lg shadow-primary/10 ring-1 ring-primary/30"
+                    : "bg-card"
+                }`}
+              >
+                {plan.featured && (
+                  <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground">
+                    Most popular
+                  </span>
+                )}
+                <h3 className="font-display text-xl font-bold">{plan.name}</h3>
+                <p className="mt-3 font-display text-4xl font-bold">
+                  {plan.price}
+                  <span className="text-sm font-normal text-muted-foreground"> {plan.period}</span>
+                </p>
+                <p className="mt-3 text-sm text-muted-foreground">{plan.blurb}</p>
+                <ul className="mt-5 flex-1 space-y-2 text-sm">
+                  {plan.perks.map((perk) => (
+                    <li key={perk} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span>{perk}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button className="mt-6 w-full" variant={plan.featured ? "default" : "outline"} asChild>
+                  <Link to={plan.to}>{plan.cta}</Link>
+                </Button>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

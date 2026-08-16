@@ -191,6 +191,8 @@ export interface RefundDto {
   branchId?: string;
   paymentType: PaymentType;
   createdAt?: string;
+  status?: string;
+  restocked?: boolean;
 }
 
 export type ERegistrationStatus = "PENDING" | "UNDER_REVIEW" | "MORE_INFO" | "APPROVED" | "REJECTED";
@@ -241,6 +243,7 @@ export interface AnalyticsSummary {
   storeCount: number;
   branchCount: number;
   productCount: number;
+  employeeCount?: number;
   daily: DailyMetric[];
   byBranch: NamedMetric[];
   topProducts: NamedMetric[];

@@ -38,16 +38,18 @@ function Shop() {
   const [favs, setFavs] = useState<Set<string>>(new Set());
 
   const loadMeta = async () => {
-    const [s, b, c, br] = await Promise.all([
+    const [s, b, c, br, favIds] = await Promise.all([
       api.get<PagedResponse<StoreDto>>("/api/catalog/stores", { params: { size: 100 } }),
       api.get<PagedResponse<BranchDto>>("/api/catalog/branches", { params: { size: 100, storeId: storeId || undefined } }),
       api.get<CategoryDto[]>("/api/catalog/categories", { params: { storeId: storeId || undefined } }),
       api.get<string[]>("/api/catalog/brands"),
+      api.get<string[]>("/api/shop/favorites/ids").catch(() => ({ data: [] as string[] })),
     ]);
     setStores(s.data.content ?? []);
     setBranches(b.data.content ?? []);
     setCategories(Array.isArray(c.data) ? c.data : []);
     setBrands(br.data ?? []);
+    setFavs(new Set((favIds.data ?? []).map(String)));
   };
 
   const load = async (p = 0) => {
@@ -151,7 +153,15 @@ function Shop() {
               <p className="text-xs text-muted-foreground">Stock {p.stockQuantity ?? 0} · {p.brand}</p>
               <div className="mt-2 flex gap-2">
                 <Button size="sm" onClick={() => addCart(p.id)}><ShoppingCart className="size-3" /> Cart</Button>
-                <Button size="sm" variant="outline" onClick={() => toggleFav(p.id)}><Heart className="size-3" /></Button>
+                <Button
+                  size="sm"
+                  variant={favs.has(p.id!) ? "default" : "outline"}
+                  className={favs.has(p.id!) ? "bg-rose-600 hover:bg-rose-700 text-white" : ""}
+                  onClick={() => toggleFav(p.id)}
+                  aria-pressed={favs.has(p.id!)}
+                >
+                  <Heart className={`size-3 ${favs.has(p.id!) ? "fill-current" : ""}`} />
+                </Button>
               </div>
             </div>
           </article>
