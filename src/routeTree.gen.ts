@@ -30,6 +30,7 @@ import { Route as StoreDashboardRouteImport } from './routes/store.dashboard'
 import { Route as StoreCategoriesRouteImport } from './routes/store.categories'
 import { Route as StoreBranchesRouteImport } from './routes/store.branches'
 import { Route as StoreBillingRouteImport } from './routes/store.billing'
+import { Route as StoreStoresRouteImport } from './routes/store.stores'
 import { Route as StoreAnalyticsRouteImport } from './routes/store.analytics'
 import { Route as PosShiftRouteImport } from './routes/pos.shift'
 import { Route as PosRefundsRouteImport } from './routes/pos.refunds'
@@ -149,6 +150,11 @@ const StoreBillingRoute = StoreBillingRouteImport.update({
   path: '/store/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreStoresRoute = StoreStoresRouteImport.update({
+  id: '/store/stores',
+  path: '/store/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreAnalyticsRoute = StoreAnalyticsRouteImport.update({
   id: '/store/analytics',
   path: '/store/analytics',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
   '/store/billing': typeof StoreBillingRoute
+  '/store/stores': typeof StoreStoresRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
   '/store/billing': typeof StoreBillingRoute
+  '/store/stores': typeof StoreStoresRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/pos/shift': typeof PosShiftRoute
   '/store/analytics': typeof StoreAnalyticsRoute
   '/store/billing': typeof StoreBillingRoute
+  '/store/stores': typeof StoreStoresRoute
   '/store/branches': typeof StoreBranchesRoute
   '/store/categories': typeof StoreCategoriesRoute
   '/store/dashboard': typeof StoreDashboardRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/pos/shift'
     | '/store/analytics'
     | '/store/billing'
+    | '/store/stores'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/pos/shift'
     | '/store/analytics'
     | '/store/billing'
+    | '/store/stores'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/pos/shift'
     | '/store/analytics'
     | '/store/billing'
+    | '/store/stores'
     | '/store/branches'
     | '/store/categories'
     | '/store/dashboard'
@@ -457,6 +469,7 @@ export interface RootRouteChildren {
   PosShiftRoute: typeof PosShiftRoute
   StoreAnalyticsRoute: typeof StoreAnalyticsRoute
   StoreBillingRoute: typeof StoreBillingRoute
+  StoreStoresRoute: typeof StoreStoresRoute
   StoreBranchesRoute: typeof StoreBranchesRoute
   StoreCategoriesRoute: typeof StoreCategoriesRoute
   StoreDashboardRoute: typeof StoreDashboardRoute
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/stores': {
+      id: '/store/stores'
+      path: '/store/stores'
+      fullPath: '/store/stores'
+      preLoaderRoute: typeof StoreStoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store/analytics': {
       id: '/store/analytics'
       path: '/store/analytics'
@@ -737,6 +757,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosShiftRoute: PosShiftRoute,
   StoreAnalyticsRoute: StoreAnalyticsRoute,
   StoreBillingRoute: StoreBillingRoute,
+  StoreStoresRoute: StoreStoresRoute,
   StoreBranchesRoute: StoreBranchesRoute,
   StoreCategoriesRoute: StoreCategoriesRoute,
   StoreDashboardRoute: StoreDashboardRoute,
