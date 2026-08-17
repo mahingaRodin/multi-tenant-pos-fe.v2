@@ -56,6 +56,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   ROLE_STORE_ADMIN: [
     { to: "/store/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/store/stores", label: "Stores", icon: Store },
     { to: "/store/branches", label: "Branches", icon: GitBranch },
     { to: "/store/products", label: "Products", icon: Package },
     { to: "/store/categories", label: "Categories", icon: Tags },
@@ -66,6 +67,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   ROLE_STORE_MANAGER: [
     { to: "/store/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/store/stores", label: "Stores", icon: Store },
     { to: "/store/branches", label: "Branches", icon: GitBranch },
     { to: "/store/products", label: "Products", icon: Package },
     { to: "/store/categories", label: "Categories", icon: Tags },

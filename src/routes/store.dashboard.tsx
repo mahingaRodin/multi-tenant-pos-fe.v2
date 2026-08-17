@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Package, Store, ShoppingBag, DollarSign } from "lucide-react";
@@ -9,6 +9,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 import type { AnalyticsSummary } from "@/lib/types";
 import { fmtMoney } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/store/dashboard")({
   component: () => (
@@ -66,6 +67,9 @@ function StoreDashboard() {
           <p className="mt-2 text-sm text-muted-foreground">
             Create a store to see live sales, products, and branches for this account.
           </p>
+          <Button className="mt-5" asChild>
+            <Link to="/store/stores">Add a store</Link>
+          </Button>
         </div>
       ) : (
         <>

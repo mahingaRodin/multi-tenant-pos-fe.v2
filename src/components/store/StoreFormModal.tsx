@@ -27,11 +27,14 @@ export function StoreFormModal({
   onClose,
   storeToEdit,
   onSuccess,
+  portal = false,
 }: {
   open: boolean;
   onClose: () => void;
   storeToEdit?: StoreDto | null;
   onSuccess: () => void;
+  /** Use tenant-scoped business portal APIs (store admin). */
+  portal?: boolean;
 }) {
   const isEditing = !!storeToEdit;
 
@@ -84,7 +87,26 @@ export function StoreFormModal({
         },
       };
 
-      if (isEditing && storeToEdit.id) {
+      if (portal) {
+        const body = {
+          brand: brand.trim(),
+          description: description.trim() || undefined,
+          storeType: storeType || undefined,
+          contactPhone: contactPhone.trim() || undefined,
+          contactEmail: contactEmail.trim() || undefined,
+          contactAddress: address.trim() || undefined,
+        };
+        if (isEditing && storeToEdit.id) {
+          await api.put(`/api/portal/business/stores/${storeToEdit.id}`, body);
+          toast.success("Store updated successfully");
+        } else {
+          const created = await api.post<StoreDto>("/api/portal/business/stores", body);
+          if (created.data?.id) {
+            useAuthStore.getState().patchUser({ storeId: created.data.id });
+          }
+          toast.success("Store created successfully");
+        }
+      } else if (isEditing && storeToEdit.id) {
         await api.put(`/api/stores/${storeToEdit.id}/update`, payload);
         toast.success("Store updated successfully");
       } else {
