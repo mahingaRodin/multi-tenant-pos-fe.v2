@@ -1,10 +1,10 @@
-name: CI
+name: Staging CI
 
 on:
   pull_request:
-    branches: [main, staging, dev-pc]
+    branches: [main, staging]
   push:
-    branches: [staging, dev-pc]
+    branches: [staging]
 
 jobs:
   build:
